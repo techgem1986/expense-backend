@@ -1,0 +1,153 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: expense-management-service
+
+  profiles:
+    active: dev
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/expense_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        show_sql: false
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+  quartz:
+    job-store-type: memory
+    properties:
+      org.quartz.threadPool.threadCount: 5
+      org.quartz.threadPool.threadPriority: 5
+      org.quartz.jobStore.class: org.quartz.simpl.RAMJobStore
+      org.quartz.plugin.triggers.class: org.quartz.plugins.management.ShutdownHookPlugin
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.expenseapp: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.quartz: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/expense-app.log
+
+app:
+  jwt:
+    secret: "your-secret-key-for-development-only-change-this-in-production"
+    expiration: 86400
+  cors:
+    allowed-origins: "http://localhost:3000,http://localhost:8080"
+    allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+    allowed-headers: "*"
+    allow-credentials: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  redis:
+    host: localhost
+    port: 6379
+
+  quartz:
+    job-store-type: memory
+
+logging:
+  level:
+    com.expenseapp: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+
+  redis:
+    url: ${REDIS_URL}
+
+  quartz:
+    job-store-type: jdbc
+
+logging:
+  level:
+    com.expenseapp: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
