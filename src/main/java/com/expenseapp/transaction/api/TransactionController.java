@@ -9,6 +9,8 @@ import com.expenseapp.user.service.UserService;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.category.domain.Category;
 import com.expenseapp.category.service.CategoryService;
+import com.expenseapp.account.domain.Account;
+import com.expenseapp.account.service.AccountService;
 import com.expenseapp.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,12 +44,16 @@ public class TransactionController {
     public TransactionController(TransactionService transactionService,
                                 UserService userService,
                                 CategoryService categoryService,
-                                TransactionMapper transactionMapper) {
+                                TransactionMapper transactionMapper,
+                                AccountService accountService) {
         this.transactionService = transactionService;
         this.userService = userService;
         this.categoryService = categoryService;
         this.transactionMapper = transactionMapper;
+        this.accountService = accountService;
     }
+
+    private final AccountService accountService;
 
     /**
      * Create a new transaction.
@@ -71,11 +77,24 @@ public class TransactionController {
             category = categoryService.getCategoryEntityById(request.getCategoryId());
         }
 
+        Account fromAccount = null;
+        if (request.getFromAccountId() != null) {
+            fromAccount = accountService.getAccountEntityById(request.getFromAccountId());
+        }
+
+        Account toAccount = null;
+        if (request.getToAccountId() != null) {
+            toAccount = accountService.getAccountEntityById(request.getToAccountId());
+        }
+
         Transaction transaction = transactionMapper.toEntity(request);
         transaction.setUser(user);
         transaction.setCategory(category);
+        transaction.setFromAccount(fromAccount);
+        transaction.setToAccount(toAccount);
 
         Transaction savedTransaction = transactionService.createTransaction(transaction);
+
         TransactionResponse response = transactionMapper.toResponseWithUserAndCategory(
             savedTransaction, user, category);
 
@@ -109,7 +128,8 @@ public class TransactionController {
         Page<Transaction> transactions = transactionService.getTransactionsByUser(user, pageable);
 
         Page<TransactionResponse> response = transactions.map(t ->
-            transactionMapper.toResponseWithUserAndCategory(t, user, t.getCategory()));
+            transactionMapper.toResponseWithUserAndCategory(t, user, t.getCategory())
+        );
 
         return ResponseEntity.ok(ApiResponse.success("Transactions retrieved successfully", response));
     }
@@ -196,11 +216,24 @@ public class TransactionController {
             category = categoryService.getCategoryEntityById(request.getCategoryId());
         }
 
+        Account fromAccount = null;
+        if (request.getFromAccountId() != null) {
+            fromAccount = accountService.getAccountEntityById(request.getFromAccountId());
+        }
+
+        Account toAccount = null;
+        if (request.getToAccountId() != null) {
+            toAccount = accountService.getAccountEntityById(request.getToAccountId());
+        }
+
         Transaction transactionDetails = transactionMapper.toEntity(request);
         transactionDetails.setUser(user);
         transactionDetails.setCategory(category);
+        transactionDetails.setFromAccount(fromAccount);
+        transactionDetails.setToAccount(toAccount);
 
         Transaction updatedTransaction = transactionService.updateTransaction(id, transactionDetails);
+
         TransactionResponse response = transactionMapper.toResponseWithUserAndCategory(
             updatedTransaction, user, category);
 

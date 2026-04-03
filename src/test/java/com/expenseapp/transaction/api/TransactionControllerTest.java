@@ -9,6 +9,7 @@ import com.expenseapp.user.service.UserService;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.category.domain.Category;
 import com.expenseapp.category.service.CategoryService;
+import com.expenseapp.account.service.AccountService;
 import com.expenseapp.shared.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +60,9 @@ class TransactionControllerTest {
 
     @MockBean
     private TransactionMapper transactionMapper;
+
+    @MockBean
+    private AccountService accountService;
 
     private User testUser;
     private Category testCategory;

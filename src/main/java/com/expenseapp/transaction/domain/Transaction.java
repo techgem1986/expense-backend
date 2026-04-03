@@ -1,5 +1,6 @@
 package com.expenseapp.transaction.domain;
 
+import com.expenseapp.account.domain.Account;
 import com.expenseapp.shared.entity.BaseEntity;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.category.domain.Category;
@@ -51,6 +52,14 @@ public class Transaction extends BaseEntity {
     @Column(name = "linked_recurring_transaction_id")
     private Long linkedRecurringTransactionId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_account_id")
+    private Account fromAccount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_account_id")
+    private Account toAccount;
+
     // Constructors
     public Transaction() {}
 
@@ -62,6 +71,19 @@ public class Transaction extends BaseEntity {
         this.type = type;
         this.description = description;
         this.transactionDate = transactionDate;
+    }
+
+    public Transaction(User user, Category category, BigDecimal amount, 
+                      TransactionType type, String description, LocalDate transactionDate,
+                      Account fromAccount, Account toAccount) {
+        this.user = user;
+        this.category = category;
+        this.amount = amount;
+        this.type = type;
+        this.description = description;
+        this.transactionDate = transactionDate;
+        this.fromAccount = fromAccount;
+        this.toAccount = toAccount;
     }
 
     // Getters and setters
@@ -137,6 +159,22 @@ public class Transaction extends BaseEntity {
         this.linkedRecurringTransactionId = linkedRecurringTransactionId;
     }
 
+    public Account getFromAccount() {
+        return fromAccount;
+    }
+
+    public void setFromAccount(Account fromAccount) {
+        this.fromAccount = fromAccount;
+    }
+
+    public Account getToAccount() {
+        return toAccount;
+    }
+
+    public void setToAccount(Account toAccount) {
+        this.toAccount = toAccount;
+    }
+
     // Helper methods
     public boolean isIncome() {
         return TransactionType.INCOME.equals(this.type);
@@ -189,6 +227,8 @@ public class Transaction extends BaseEntity {
                 ", transactionDate=" + transactionDate +
                 ", isRecurringInstance=" + isRecurringInstance +
                 ", linkedRecurringTransactionId=" + linkedRecurringTransactionId +
+                ", fromAccount=" + (fromAccount != null ? fromAccount.getName() : "null") +
+                ", toAccount=" + (toAccount != null ? toAccount.getName() : "null") +
                 '}';
     }
 }

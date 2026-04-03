@@ -1,6 +1,7 @@
 package com.expenseapp.transaction.dto;
 
 import com.expenseapp.transaction.domain.Transaction.TransactionType;
+import com.expenseapp.account.dto.AccountResponse;
 import com.expenseapp.category.dto.CategoryResponse;
 import com.expenseapp.user.dto.UserResponse;
 import java.math.BigDecimal;
@@ -20,6 +21,8 @@ public class TransactionResponse {
     private LocalDate transactionDate;
     private Boolean isRecurringInstance;
     private Long linkedRecurringTransactionId;
+    private AccountResponse fromAccount;
+    private AccountResponse toAccount;
     private String createdAt;
     private String updatedAt;
 
@@ -29,6 +32,7 @@ public class TransactionResponse {
     public TransactionResponse(Long id, UserResponse user, CategoryResponse category, BigDecimal amount,
                               TransactionType type, String description, LocalDate transactionDate,
                               Boolean isRecurringInstance, Long linkedRecurringTransactionId,
+                              AccountResponse fromAccount, AccountResponse toAccount,
                               String createdAt, String updatedAt) {
         this.id = id;
         this.user = user;
@@ -39,6 +43,8 @@ public class TransactionResponse {
         this.transactionDate = transactionDate;
         this.isRecurringInstance = isRecurringInstance;
         this.linkedRecurringTransactionId = linkedRecurringTransactionId;
+        this.fromAccount = fromAccount;
+        this.toAccount = toAccount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -114,6 +120,22 @@ public class TransactionResponse {
 
     public void setLinkedRecurringTransactionId(Long linkedRecurringTransactionId) {
         this.linkedRecurringTransactionId = linkedRecurringTransactionId;
+    }
+
+    public AccountResponse getFromAccount() {
+        return fromAccount;
+    }
+
+    public void setFromAccount(AccountResponse fromAccount) {
+        this.fromAccount = fromAccount;
+    }
+
+    public AccountResponse getToAccount() {
+        return toAccount;
+    }
+
+    public void setToAccount(AccountResponse toAccount) {
+        this.toAccount = toAccount;
     }
 
     public String getCreatedAt() {

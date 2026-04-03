@@ -33,10 +33,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Page<Transaction> findByUser(User user, Pageable pageable);
 
     /**
-     * Find all transactions for a specific user with pagination, fetching category eagerly.
+     * Find all transactions for a specific user with pagination, fetching category and accounts eagerly.
      */
-    @Query("SELECT t FROM Transaction t JOIN FETCH t.category WHERE t.user = :user")
-    Page<Transaction> findByUserWithCategory(User user, Pageable pageable);
+    @Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.category c LEFT JOIN FETCH t.fromAccount f LEFT JOIN FETCH t.toAccount to WHERE t.user = :user")
+    Page<Transaction> findByUserWithCategoryAndAccounts(User user, Pageable pageable);
 
     /**
      * Find transactions by user and transaction type.
@@ -71,10 +71,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByLinkedRecurringTransactionIdOrderByTransactionDateDesc(Long recurringTransactionId);
 
     /**
-     * Find a transaction by ID with category eagerly fetched.
+     * Find a transaction by ID with category and accounts eagerly fetched.
      */
-    @Query("SELECT t FROM Transaction t JOIN FETCH t.category WHERE t.id = :id")
-    Optional<Transaction> findByIdWithCategory(@Param("id") Long id);
+    @Query("SELECT t FROM Transaction t JOIN FETCH t.category c LEFT JOIN FETCH t.fromAccount f LEFT JOIN FETCH t.toAccount to WHERE t.id = :id")
+    Optional<Transaction> findByIdWithCategoryAndAccounts(@Param("id") Long id);
 
     /**
      * Find the latest transaction for a recurring transaction.

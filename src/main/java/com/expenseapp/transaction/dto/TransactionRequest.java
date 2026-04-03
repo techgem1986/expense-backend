@@ -26,16 +26,30 @@ public class TransactionRequest {
 
     private Long categoryId;
 
+    private Long fromAccountId;
+    private Long toAccountId;
+
     // Constructors
     public TransactionRequest() {}
 
     public TransactionRequest(BigDecimal amount, TransactionType type, String description, 
-                             LocalDate transactionDate, Long categoryId) {
+                              LocalDate transactionDate, Long categoryId) {
         this.amount = amount;
         this.type = type;
         this.description = description;
         this.transactionDate = transactionDate;
         this.categoryId = categoryId;
+    }
+
+    public TransactionRequest(BigDecimal amount, TransactionType type, String description, 
+                              LocalDate transactionDate, Long categoryId, Long fromAccountId, Long toAccountId) {
+        this.amount = amount;
+        this.type = type;
+        this.description = description;
+        this.transactionDate = transactionDate;
+        this.categoryId = categoryId;
+        this.fromAccountId = fromAccountId;
+        this.toAccountId = toAccountId;
     }
 
     // Getters and setters
@@ -77,5 +91,21 @@ public class TransactionRequest {
 
     public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public Long getFromAccountId() {
+        return fromAccountId;
+    }
+
+    public void setFromAccountId(Long fromAccountId) {
+        this.fromAccountId = fromAccountId;
+    }
+
+    public Long getToAccountId() {
+        return toAccountId;
+    }
+
+    public void setToAccountId(Long toAccountId) {
+        this.toAccountId = toAccountId;
     }
 }
