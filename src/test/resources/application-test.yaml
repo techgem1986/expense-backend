@@ -65,6 +65,12 @@ management:
   endpoint:
     health:
       show-details: always
+  metrics:
+    enable:
+      jvm: false
+      process: false
+      system: false
+      tomcat: false
 
 logging:
   level:
