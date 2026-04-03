@@ -1,0 +1,76 @@
+version: 2.1
+
+orbs:
+  maven: circleci/maven@2.1.0
+
+executors:
+  java-executor:
+    docker:
+      - image: cimg/openjdk:17.0.0
+    environment:
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+
+jobs:
+  build-and-test:
+    executor: java-executor
+    steps:
+      - checkout
+      
+      - restore_cache:
+          keys:
+            - maven-cache-{{ checksum "pom.xml" }}
+            - maven-cache-
+      
+      - run:
+          name: Build and Run Tests
+          command: mvn clean verify -B
+      
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: maven-cache-{{ checksum "pom.xml" }}
+      
+      - store_test_results:
+          path: target/surefire-reports
+      
+      - store_artifacts:
+          path: target/surefire-reports
+          destination: test-results
+      
+      - store_artifacts:
+          path: target
+          destination: build-artifacts
+
+  commit-and-push:
+    executor: java-executor
+    steps:
+      - checkout
+      
+      - run:
+          name: Configure Git
+          command: |
+            git config user.email "ci@expenseapp.com"
+            git config user.name "CircleCI Bot"
+      
+      - run:
+          name: Add, commit and push changes
+          command: |
+            git add .
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+              exit 0
+            fi
+            git commit -m "ci: automated build and test [skip ci]"
+            git push origin ${CIRCLE_BRANCH}
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build-and-test
+      - commit-and-push:
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              ignore: main
