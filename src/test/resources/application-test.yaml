@@ -1,4 +1,6 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
   application:
     name: expense-management-service
 
@@ -25,6 +27,10 @@ spring:
     console:
       enabled: false
 
+  data:
+    redis:
+      repositories:
+        enabled: false
   redis:
     host: localhost
     port: 6379
@@ -36,6 +42,7 @@ spring:
         min-idle: 0
 
   quartz:
+    enabled: false
     job-store-type: memory
     properties:
       org.quartz.threadPool.threadCount: 5
