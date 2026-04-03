@@ -72,13 +72,6 @@ management:
       system: false
       tomcat: false
 
-logging:
-  level:
-    com.expenseapp: INFO
-    org.springframework.security: INFO
-    org.hibernate.SQL: INFO
-    org.quartz: INFO
-
 app:
   jwt:
     secret: "test-secret-key-for-unit-testing-only-not-for-production-use"
