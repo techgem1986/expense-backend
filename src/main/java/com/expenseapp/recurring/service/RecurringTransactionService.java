@@ -109,6 +109,8 @@ public class RecurringTransactionService {
         recurringTransaction.setDayOfMonth(recurringTransactionDetails.getDayOfMonth());
         recurringTransaction.setStartDate(recurringTransactionDetails.getStartDate());
         recurringTransaction.setEndDate(recurringTransactionDetails.getEndDate());
+        recurringTransaction.setFromAccount(recurringTransactionDetails.getFromAccount());
+        recurringTransaction.setToAccount(recurringTransactionDetails.getToAccount());
         
         return recurringTransactionRepository.save(recurringTransaction);
     }

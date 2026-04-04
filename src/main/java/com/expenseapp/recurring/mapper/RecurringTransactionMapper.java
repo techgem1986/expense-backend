@@ -9,6 +9,7 @@ import com.expenseapp.category.domain.Category;
 import com.expenseapp.user.mapper.UserMapper;
 import com.expenseapp.user.dto.UserResponse;
 import com.expenseapp.user.domain.User;
+import com.expenseapp.account.domain.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -24,16 +25,18 @@ public interface RecurringTransactionMapper {
     CategoryMapper CATEGORY_MAPPER = Mappers.getMapper(CategoryMapper.class);
     UserMapper USER_MAPPER = Mappers.getMapper(UserMapper.class);
 
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "nextExecutionDate", ignore = true)
-    RecurringTransactionResponse toResponse(RecurringTransaction recurringTransaction);
+@Mapping(target = "user", ignore = true)
+@Mapping(target = "category", ignore = true)
+@Mapping(target = "fromAccount", ignore = true)
+@Mapping(target = "toAccount", ignore = true)
+RecurringTransactionResponse toResponse(RecurringTransaction recurringTransaction);
 
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "isActive", ignore = true)
-    @Mapping(target = "nextExecutionDate", ignore = true)
-    RecurringTransaction toEntity(RecurringTransactionRequest request);
+@Mapping(target = "user", ignore = true)
+@Mapping(target = "category", ignore = true)
+@Mapping(target = "isActive", ignore = true)
+@Mapping(target = "fromAccount", ignore = true)
+@Mapping(target = "toAccount", ignore = true)
+RecurringTransaction toEntity(RecurringTransactionRequest request);
 
     default RecurringTransactionResponse toResponseWithUserAndCategory(RecurringTransaction recurringTransaction, User user, Category category) {
         RecurringTransactionResponse response = toResponse(recurringTransaction);
@@ -43,6 +46,25 @@ public interface RecurringTransactionMapper {
         if (category != null) {
             response.setCategory(CATEGORY_MAPPER.toResponse(category));
         }
+        return response;
+    }
+
+    default RecurringTransactionResponse toResponseWithAccounts(RecurringTransaction recurringTransaction, User user, Category category, Account fromAccount, Account toAccount) {
+        RecurringTransactionResponse response = toResponseWithUserAndCategory(recurringTransaction, user, category);
+        if (fromAccount != null) {
+            response.setFromAccount(mapAccountToResponse(fromAccount));
+        }
+        if (toAccount != null) {
+            response.setToAccount(mapAccountToResponse(toAccount));
+        }
+        return response;
+    }
+
+    default RecurringTransactionResponse.AccountResponse mapAccountToResponse(Account account) {
+        RecurringTransactionResponse.AccountResponse response = new RecurringTransactionResponse.AccountResponse();
+        response.setId(account.getId());
+        response.setName(account.getName());
+        response.setAccountType(account.getAccountType().name());
         return response;
     }
 }

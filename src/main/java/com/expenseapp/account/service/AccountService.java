@@ -125,11 +125,15 @@ public class AccountService {
 
     /**
      * Get account entity by ID (used by other services).
+     * This method eagerly loads the account to avoid LazyInitializationException.
      */
     @Transactional(readOnly = true)
     public Account getAccountEntityById(Long accountId) {
-        return accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
             .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
+        // Force initialization of lazy-loaded properties
+        account.getUser().getId();
+        return account;
     }
 
     /**

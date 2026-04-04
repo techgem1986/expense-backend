@@ -25,8 +25,45 @@ public class RecurringTransactionResponse {
     private LocalDate endDate;
     private LocalDate nextExecutionDate;
     private Boolean isActive;
+    private AccountResponse fromAccount;
+    private AccountResponse toAccount;
     private String createdAt;
     private String updatedAt;
+
+    /**
+     * Nested class for account information in response.
+     */
+    public static class AccountResponse {
+        private Long id;
+        private String name;
+        private String accountType;
+
+        public AccountResponse() {}
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getAccountType() {
+            return accountType;
+        }
+
+        public void setAccountType(String accountType) {
+            this.accountType = accountType;
+        }
+    }
 
     // Constructors
     public RecurringTransactionResponse() {}
@@ -156,6 +193,22 @@ public class RecurringTransactionResponse {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public AccountResponse getFromAccount() {
+        return fromAccount;
+    }
+
+    public void setFromAccount(AccountResponse fromAccount) {
+        this.fromAccount = fromAccount;
+    }
+
+    public AccountResponse getToAccount() {
+        return toAccount;
+    }
+
+    public void setToAccount(AccountResponse toAccount) {
+        this.toAccount = toAccount;
     }
 
     public String getCreatedAt() {

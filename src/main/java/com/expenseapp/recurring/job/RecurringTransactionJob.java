@@ -1,6 +1,7 @@
 package com.expenseapp.recurring.job;
 
 import com.expenseapp.recurring.domain.RecurringTransaction;
+import com.expenseapp.recurring.domain.RecurringTransaction.Frequency;
 import com.expenseapp.recurring.service.RecurringTransactionService;
 import com.expenseapp.transaction.domain.Transaction;
 import com.expenseapp.transaction.service.TransactionService;
@@ -73,6 +74,10 @@ public class RecurringTransactionJob {
         generatedTransaction.setTransactionDate(LocalDate.now());
         generatedTransaction.setIsRecurringInstance(true);
         generatedTransaction.setLinkedRecurringTransactionId(recurringTransaction.getId());
+        
+        // Set account information for money transfers
+        generatedTransaction.setFromAccount(recurringTransaction.getFromAccount());
+        generatedTransaction.setToAccount(recurringTransaction.getToAccount());
 
         // Save the generated transaction
         Transaction savedTransaction = transactionService.createTransaction(generatedTransaction);
@@ -95,22 +100,34 @@ public class RecurringTransactionJob {
     }
 
     private LocalDate calculateNextExecutionDate(RecurringTransaction recurringTransaction) {
-        LocalDate nextDate = recurringTransaction.getNextExecutionDate();
+        LocalDate startDate = recurringTransaction.getStartDate();
+        Frequency frequency = recurringTransaction.getFrequency();
+        Integer dayOfMonth = recurringTransaction.getDayOfMonth();
+        LocalDate endDate = recurringTransaction.getEndDate();
         
-        switch (recurringTransaction.getFrequency()) {
+        // For the next execution after the current one, we need to advance by one frequency period
+        switch (frequency) {
             case MONTHLY:
-                nextDate = nextDate.plusMonths(1);
-                break;
+                // Get the current next execution date and advance by one month
+                LocalDate currentNext = recurringTransaction.getNextExecutionDate();
+                if (currentNext != null) {
+                    // Calculate for the month after current next execution
+                    LocalDate nextMonth = currentNext.plusMonths(1);
+                    int daysInNextMonth = nextMonth.lengthOfMonth();
+                    int actualDay = Math.min(dayOfMonth != null ? dayOfMonth : currentNext.getDayOfMonth(), daysInNextMonth);
+                    return nextMonth.withDayOfMonth(actualDay);
+                } else {
+                    // Fallback: calculate from start date
+                    return recurringTransaction.calculateNextExecutionDate(startDate, frequency, dayOfMonth);
+                }
             default:
-                nextDate = nextDate.plusMonths(1);
+                // Default to monthly behavior
+                LocalDate nextExecution = recurringTransaction.getNextExecutionDate();
+                if (nextExecution != null) {
+                    return nextExecution.plusMonths(1);
+                } else {
+                    return recurringTransaction.calculateNextExecutionDate(startDate, frequency, dayOfMonth);
+                }
         }
-
-        // If the next date would exceed the end date, deactivate the recurring transaction
-        if (recurringTransaction.getEndDate() != null && nextDate.isAfter(recurringTransaction.getEndDate())) {
-            recurringTransactionService.deactivateRecurringTransaction(recurringTransaction.getId());
-            return null;
-        }
-
-        return nextDate;
     }
 }

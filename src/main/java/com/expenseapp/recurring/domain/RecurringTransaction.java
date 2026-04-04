@@ -3,6 +3,7 @@ package com.expenseapp.recurring.domain;
 import com.expenseapp.shared.entity.BaseEntity;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.category.domain.Category;
+import com.expenseapp.account.domain.Account;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -66,6 +67,14 @@ public class RecurringTransaction extends BaseEntity {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_account_id")
+    private Account fromAccount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_account_id")
+    private Account toAccount;
+
     // Constructors
     public RecurringTransaction() {}
 
@@ -82,7 +91,8 @@ public class RecurringTransaction extends BaseEntity {
         this.dayOfMonth = dayOfMonth;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.nextExecutionDate = calculateNextExecutionDate(startDate);
+        // Calculate next execution date based on start date, frequency, and day of month
+        this.nextExecutionDate = calculateNextExecutionDate(startDate, frequency, dayOfMonth);
     }
 
     // Getters and setters
@@ -191,6 +201,22 @@ public class RecurringTransaction extends BaseEntity {
         this.isActive = isActive;
     }
 
+    public Account getFromAccount() {
+        return fromAccount;
+    }
+
+    public void setFromAccount(Account fromAccount) {
+        this.fromAccount = fromAccount;
+    }
+
+    public Account getToAccount() {
+        return toAccount;
+    }
+
+    public void setToAccount(Account toAccount) {
+        this.toAccount = toAccount;
+    }
+
     // Helper methods
     public boolean isActive() {
         return Boolean.TRUE.equals(isActive);
@@ -205,10 +231,60 @@ public class RecurringTransaction extends BaseEntity {
     }
 
     public LocalDate calculateNextExecutionDate(LocalDate startDate) {
-        LocalDate nextDate = startDate;
-        while (nextDate.isBefore(LocalDate.now())) {
-            nextDate = nextDate.plusMonths(1);
+        return calculateNextExecutionDate(startDate, this.frequency, this.dayOfMonth);
+    }
+
+    public LocalDate calculateNextExecutionDate(LocalDate startDate, Frequency frequency, Integer dayOfMonth) {
+        if (startDate == null || frequency == null) {
+            // If no start date, use today as fallback
+            startDate = LocalDate.now();
         }
+        
+        LocalDate today = LocalDate.now();
+        LocalDate nextDate = startDate;
+        
+        // If start date is in the future, use it
+        if (startDate.isAfter(today)) {
+            return startDate;
+        }
+        
+        // Calculate next execution date based on frequency
+        switch (frequency) {
+            case MONTHLY:
+                nextDate = calculateNextMonthlyDate(startDate, dayOfMonth, today);
+                break;
+            default:
+                // Default to monthly behavior
+                nextDate = calculateNextMonthlyDate(startDate, dayOfMonth, today);
+        }
+        
+        // Ensure we always return a valid date
+        if (nextDate == null) {
+            nextDate = today.plusMonths(1);
+        }
+        
+        return nextDate;
+    }
+
+    private LocalDate calculateNextMonthlyDate(LocalDate startDate, Integer dayOfMonth, LocalDate today) {
+        int targetDay = dayOfMonth != null ? dayOfMonth : startDate.getDayOfMonth();
+        
+        // Start from current month
+        LocalDate nextDate = LocalDate.of(today.getYear(), today.getMonth(), 1);
+        
+        // Try to set the target day in current month
+        int daysInMonth = nextDate.lengthOfMonth();
+        int actualDay = Math.min(targetDay, daysInMonth);
+        nextDate = nextDate.withDayOfMonth(actualDay);
+        
+        // If this date has already passed this month, move to next month
+        if (nextDate.isBefore(today)) {
+            nextDate = nextDate.plusMonths(1);
+            daysInMonth = nextDate.lengthOfMonth();
+            actualDay = Math.min(targetDay, daysInMonth);
+            nextDate = nextDate.withDayOfMonth(actualDay);
+        }
+        
         return nextDate;
     }
 
