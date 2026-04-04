@@ -41,6 +41,8 @@ public class TransactionController {
     private final CategoryService categoryService;
     private final TransactionMapper transactionMapper;
 
+    private final AccountService accountService;
+
     public TransactionController(TransactionService transactionService,
                                 UserService userService,
                                 CategoryService categoryService,
@@ -52,8 +54,6 @@ public class TransactionController {
         this.transactionMapper = transactionMapper;
         this.accountService = accountService;
     }
-
-    private final AccountService accountService;
 
     /**
      * Create a new transaction.

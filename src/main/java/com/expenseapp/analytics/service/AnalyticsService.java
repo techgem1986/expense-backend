@@ -66,12 +66,23 @@ public class AnalyticsService {
     @Cacheable(value = "spendingByCategory", key = "#user.id + '_' + #startDate + '_' + #endDate")
     public List<SpendingByCategoryResponse> getSpendingByCategory(User user, LocalDate startDate, LocalDate endDate) {
         List<Object[]> results = transactionService.calculateSpendingByCategory(user);
+        
+        // Calculate total expenses for percentage calculation
+        BigDecimal totalExpenses = transactionService.calculateTotalExpensesByDateRange(user, startDate, endDate);
 
         return results.stream()
-                .map(row -> new SpendingByCategoryResponse(
-                        (String) ((Category)row[0]).getName(), // category name
-                        (BigDecimal) row[1] // total amount
-                ))
+                .map(row -> {
+                    String categoryName = (String) ((Category)row[0]).getName();
+                    BigDecimal totalAmount = (BigDecimal) row[1];
+                    
+                    // Calculate percentage
+                    Double percentage = 0.0;
+                    if (totalExpenses != null && totalExpenses.compareTo(BigDecimal.ZERO) > 0) {
+                        percentage = totalAmount.divide(totalExpenses, 4, BigDecimal.ROUND_HALF_UP).doubleValue() * 100.0;
+                    }
+                    
+                    return new SpendingByCategoryResponse(categoryName, totalAmount, percentage);
+                })
                 .collect(Collectors.toList());
     }
 

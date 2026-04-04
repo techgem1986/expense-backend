@@ -48,7 +48,6 @@ public class Account extends BaseEntity {
     private BigDecimal openingBalance = BigDecimal.ZERO;
 
     @NotNull
-    @PositiveOrZero
     @Column(name = "current_balance", precision = 15, scale = 2, nullable = false)
     private BigDecimal currentBalance = BigDecimal.ZERO;
 
