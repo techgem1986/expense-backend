@@ -68,7 +68,8 @@ public class AccountService {
     }
 
     /**
-     * Get all accounts for the current user with pagination.
+     * Get all active accounts for the current user with pagination.
+     * Inactive (soft-deleted) accounts are excluded.
      */
     @Transactional(readOnly = true)
     public Page<AccountResponse> getAccounts(Long userId, Pageable pageable, Authentication authentication) {
@@ -78,7 +79,7 @@ public class AccountService {
             throw new ValidationException("Access denied");
         }
 
-        return accountRepository.findByUserId(userId, pageable)
+        return accountRepository.findByUserIdAndIsActiveTrue(userId, pageable)
             .map(accountMapper::toResponse);
     }
 
@@ -198,12 +199,12 @@ public class AccountService {
     }
 
     /**
-     * Get accounts by bank name.
+     * Get active accounts by bank name.
      */
     @Transactional(readOnly = true)
     public Page<AccountResponse> getAccountsByBankName(String bankName, Pageable pageable, Authentication authentication) {
         Long userId = getCurrentUserId(authentication);
-        return accountRepository.findByUserIdAndBankNameContainingIgnoreCase(userId, bankName, pageable)
+        return accountRepository.findByUserIdAndBankNameContainingIgnoreCaseAndIsActiveTrue(userId, bankName, pageable)
             .map(accountMapper::toResponse);
     }
 }

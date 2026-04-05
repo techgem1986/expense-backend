@@ -49,6 +49,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Page<Account> findByUserIdAndBankNameContainingIgnoreCase(Long userId, String bankName, Pageable pageable);
 
     /**
+     * Find active accounts by bank name containing the given string.
+     */
+    Page<Account> findByUserIdAndBankNameContainingIgnoreCaseAndIsActiveTrue(Long userId, String bankName, Pageable pageable);
+
+    /**
      * Calculate total balance for all accounts of a user.
      */
     @Query("SELECT COALESCE(SUM(a.currentBalance), 0) FROM Account a WHERE a.user.id = :userId AND a.isActive = true")

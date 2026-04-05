@@ -97,6 +97,7 @@ class AccountControllerTest {
         // which is complex to mock in WebMvcTest
     }
 
+
     @Test
     @WithMockUser(username = "test@example.com")
     void shouldGetActiveAccounts() throws Exception {
