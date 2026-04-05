@@ -4,6 +4,8 @@ import com.expenseapp.category.dto.CategoryRequest;
 import com.expenseapp.category.dto.CategoryResponse;
 import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.shared.dto.ApiResponse;
+import com.expenseapp.user.domain.User;
+import com.expenseapp.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static com.expenseapp.category.domain.Category.CategoryType.EXPENSE;
-import static com.expenseapp.category.domain.Category.CategoryType.INCOME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -41,11 +42,19 @@ class CategoryControllerTest {
     @MockBean
     private CategoryService categoryService;
 
+    @MockBean
+    private UserService userService;
+
     private CategoryResponse testCategoryResponse;
     private CategoryRequest testCategoryRequest;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setEmail("test@example.com");
+        
         testCategoryRequest = new CategoryRequest("Food", "Food expenses", EXPENSE);
         testCategoryResponse = new CategoryResponse(1L, "Food", "Food expenses", EXPENSE, null, null);
     }
@@ -53,7 +62,8 @@ class CategoryControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     void shouldGetAllCategories() throws Exception {
-        when(categoryService.getAllCategories()).thenReturn(List.of(testCategoryResponse));
+        when(userService.getUserEntityByEmail("test@example.com")).thenReturn(testUser);
+        when(categoryService.getAllCategories(testUser)).thenReturn(List.of(testCategoryResponse));
 
         mockMvc.perform(get("/api/categories"))
                 .andExpect(status().isOk())
@@ -64,7 +74,8 @@ class CategoryControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     void shouldGetCategoriesByType() throws Exception {
-        when(categoryService.getCategoriesByType(EXPENSE)).thenReturn(List.of(testCategoryResponse));
+        when(userService.getUserEntityByEmail("test@example.com")).thenReturn(testUser);
+        when(categoryService.getCategoriesByType(testUser, EXPENSE)).thenReturn(List.of(testCategoryResponse));
 
         mockMvc.perform(get("/api/categories/type/EXPENSE"))
                 .andExpect(status().isOk())
@@ -84,9 +95,10 @@ class CategoryControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "test@example.com")
     void shouldCreateCategory() throws Exception {
-        when(categoryService.createCategory(any(CategoryRequest.class))).thenReturn(testCategoryResponse);
+        when(userService.getUserEntityByEmail("test@example.com")).thenReturn(testUser);
+        when(categoryService.createCategory(any(CategoryRequest.class), any(User.class))).thenReturn(testCategoryResponse);
 
         mockMvc.perform(post("/api/categories")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -98,9 +110,10 @@ class CategoryControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "test@example.com")
     void shouldUpdateCategory() throws Exception {
-        when(categoryService.updateCategory(eq(1L), any(CategoryRequest.class))).thenReturn(testCategoryResponse);
+        when(userService.getUserEntityByEmail("test@example.com")).thenReturn(testUser);
+        when(categoryService.updateCategory(eq(1L), any(CategoryRequest.class), any(User.class))).thenReturn(testCategoryResponse);
 
         mockMvc.perform(put("/api/categories/1")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -111,8 +124,11 @@ class CategoryControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "test@example.com")
     void shouldDeleteCategory() throws Exception {
+        when(userService.getUserEntityByEmail("test@example.com")).thenReturn(testUser);
+        doNothing().when(categoryService).deleteCategory(1L, testUser);
+
         mockMvc.perform(delete("/api/categories/1").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));

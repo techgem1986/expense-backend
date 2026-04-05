@@ -7,6 +7,7 @@ import com.expenseapp.category.repository.CategoryRepository;
 import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import com.expenseapp.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,18 +34,23 @@ class CategoryServiceTest {
     private CategoryService categoryService;
 
     private Category testCategory;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
-        testCategory = new Category("Food", "Food expenses", EXPENSE);
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setEmail("test@example.com");
+        
+        testCategory = new Category("Food", "Food expenses", EXPENSE, testUser);
         testCategory.setId(1L);
     }
 
     @Test
     void shouldGetAllCategories() {
-        when(categoryRepository.findAll()).thenReturn(List.of(testCategory));
+        when(categoryRepository.findByUser(testUser)).thenReturn(List.of(testCategory));
 
-        List<CategoryResponse> categories = categoryService.getAllCategories();
+        List<CategoryResponse> categories = categoryService.getAllCategories(testUser);
 
         assertNotNull(categories);
         assertEquals(1, categories.size());
@@ -53,9 +59,9 @@ class CategoryServiceTest {
 
     @Test
     void shouldGetCategoriesByType() {
-        when(categoryRepository.findByType(EXPENSE)).thenReturn(List.of(testCategory));
+        when(categoryRepository.findByUserAndType(testUser, EXPENSE)).thenReturn(List.of(testCategory));
 
-        List<CategoryResponse> categories = categoryService.getCategoriesByType(EXPENSE);
+        List<CategoryResponse> categories = categoryService.getCategoriesByType(testUser, EXPENSE);
 
         assertNotNull(categories);
         assertEquals(1, categories.size());
@@ -84,7 +90,7 @@ class CategoryServiceTest {
     void shouldGetCategoryByName() {
         when(categoryRepository.findByName("Food")).thenReturn(Optional.of(testCategory));
 
-        CategoryResponse response = categoryService.getCategoryByName("Food");
+        CategoryResponse response = categoryService.getCategoryByName("Food", testUser);
 
         assertNotNull(response);
         assertEquals("Food", response.getName());
@@ -95,17 +101,31 @@ class CategoryServiceTest {
         when(categoryRepository.findByName("Food")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
-            categoryService.getCategoryByName("Food");
+            categoryService.getCategoryByName("Food", testUser);
+        });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCategoryNotOwnedByUser() {
+        User otherUser = new User();
+        otherUser.setId(2L);
+        Category otherCategory = new Category("Food", "Food expenses", EXPENSE, otherUser);
+        otherCategory.setId(1L);
+        
+        when(categoryRepository.findByName("Food")).thenReturn(Optional.of(otherCategory));
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            categoryService.getCategoryByName("Food", testUser);
         });
     }
 
     @Test
     void shouldCreateCategory() {
         CategoryRequest request = new CategoryRequest("Food", "Food expenses", EXPENSE);
-        when(categoryRepository.existsByName("Food")).thenReturn(false);
+        when(categoryRepository.existsByNameAndUser("Food", testUser)).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(testCategory);
 
-        CategoryResponse response = categoryService.createCategory(request);
+        CategoryResponse response = categoryService.createCategory(request, testUser);
 
         assertNotNull(response);
         assertEquals("Food", response.getName());
@@ -115,10 +135,10 @@ class CategoryServiceTest {
     @Test
     void shouldThrowExceptionWhenCategoryNameExists() {
         CategoryRequest request = new CategoryRequest("Food", "Food expenses", EXPENSE);
-        when(categoryRepository.existsByName("Food")).thenReturn(true);
+        when(categoryRepository.existsByNameAndUser("Food", testUser)).thenReturn(true);
 
         assertThrows(ValidationException.class, () -> {
-            categoryService.createCategory(request);
+            categoryService.createCategory(request, testUser);
         });
     }
 
@@ -126,43 +146,70 @@ class CategoryServiceTest {
     void shouldUpdateCategory() {
         CategoryRequest request = new CategoryRequest("Updated Food", "Updated description", EXPENSE);
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
-        when(categoryRepository.existsByName("Updated Food")).thenReturn(false);
+        when(categoryRepository.existsByNameAndUser("Updated Food", testUser)).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(testCategory);
 
-        CategoryResponse response = categoryService.updateCategory(1L, request);
+        CategoryResponse response = categoryService.updateCategory(1L, request, testUser);
 
         assertNotNull(response);
         verify(categoryRepository).save(any(Category.class));
     }
 
     @Test
-    void shouldThrowExceptionWhenUpdatedNameExists() {
-        Category testCat = new Category("Food", "Food expenses", EXPENSE);
-        testCat.setId(1L);
+    void shouldThrowExceptionWhenUpdatedCategoryNotOwned() {
+        User otherUser = new User();
+        otherUser.setId(2L);
+        Category otherCategory = new Category("Food", "Food expenses", EXPENSE, otherUser);
+        otherCategory.setId(1L);
+        
         CategoryRequest request = new CategoryRequest("Updated Food", "Updated description", EXPENSE);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCat));
-        when(categoryRepository.existsByName("Updated Food")).thenReturn(true);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(otherCategory));
 
         assertThrows(ValidationException.class, () -> {
-            categoryService.updateCategory(1L, request);
+            categoryService.updateCategory(1L, request, testUser);
+        });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdatedNameExists() {
+        CategoryRequest request = new CategoryRequest("Updated Food", "Updated description", EXPENSE);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+        when(categoryRepository.existsByNameAndUser("Updated Food", testUser)).thenReturn(true);
+
+        assertThrows(ValidationException.class, () -> {
+            categoryService.updateCategory(1L, request, testUser);
         });
     }
 
     @Test
     void shouldDeleteCategory() {
-        when(categoryRepository.existsById(1L)).thenReturn(true);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
 
-        categoryService.deleteCategory(1L);
+        categoryService.deleteCategory(1L, testUser);
 
         verify(categoryRepository).deleteById(1L);
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonexistentCategory() {
-        when(categoryRepository.existsById(1L)).thenReturn(false);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
-            categoryService.deleteCategory(1L);
+            categoryService.deleteCategory(1L, testUser);
+        });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingCategoryNotOwned() {
+        User otherUser = new User();
+        otherUser.setId(2L);
+        Category otherCategory = new Category("Food", "Food expenses", EXPENSE, otherUser);
+        otherCategory.setId(1L);
+        
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(otherCategory));
+
+        assertThrows(ValidationException.class, () -> {
+            categoryService.deleteCategory(1L, testUser);
         });
     }
 

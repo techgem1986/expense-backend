@@ -72,6 +72,7 @@ class TransactionRepositoryTest {
         testCategory.setName("Food_" + System.currentTimeMillis());
         testCategory.setDescription("Food expenses");
         testCategory.setType(Category.CategoryType.EXPENSE);
+        testCategory.setUser(testUser);
         testCategory.setCreatedAt(LocalDateTime.now());
         testCategory = categoryRepository.save(testCategory);
 
