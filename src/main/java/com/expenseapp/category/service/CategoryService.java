@@ -6,6 +6,7 @@ import com.expenseapp.category.dto.CategoryResponse;
 import com.expenseapp.category.repository.CategoryRepository;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import com.expenseapp.user.domain.User;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,27 +29,30 @@ public class CategoryService {
     }
 
     /**
-     * Get all categories.
+     * Get all categories for the authenticated user.
+     * Users can only see their own categories.
      *
+     * @param user the authenticated user
      * @return List of CategoryResponse
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "categories", key = "'all'")
-    public List<CategoryResponse> getAllCategories() {
-        return categoryRepository.findAll().stream()
+    public List<CategoryResponse> getAllCategories(User user) {
+        return categoryRepository.findByUser(user).stream()
                 .map(this::mapToCategoryResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get categories by type.
+     * Get categories by type for the authenticated user.
+     * Users can only see their own categories.
      *
+     * @param user the authenticated user
      * @param type the category type (INCOME or EXPENSE)
      * @return List of CategoryResponse
      */
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getCategoriesByType(Category.CategoryType type) {
-        return categoryRepository.findByType(type).stream()
+    public List<CategoryResponse> getCategoriesByType(User user, Category.CategoryType type) {
+        return categoryRepository.findByUserAndType(user, type).stream()
                 .map(this::mapToCategoryResponse)
                 .collect(Collectors.toList());
     }
@@ -67,28 +71,34 @@ public class CategoryService {
     }
 
     /**
-     * Get category by name.
+     * Get category by name for the authenticated user.
      *
      * @param name the category name
+     * @param user the authenticated user
      * @return CategoryResponse
      */
     @Transactional(readOnly = true)
-    public CategoryResponse getCategoryByName(String name) {
+    public CategoryResponse getCategoryByName(String name, User user) {
         Category category = categoryRepository.findByName(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with name: " + name));
+        
+        if (!category.getUser().getId().equals(user.getId())) {
+            throw new ResourceNotFoundException("Category not found with name: " + name);
+        }
+        
         return mapToCategoryResponse(category);
     }
 
     /**
-     * Create a new category.
+     * Create a new category for the authenticated user.
      *
      * @param request the category request
+     * @param user the authenticated user
      * @return CategoryResponse
      */
-    @CacheEvict(value = "categories", allEntries = true)
-    public CategoryResponse createCategory(CategoryRequest request) {
-        // Check if category already exists
-        if (categoryRepository.existsByName(request.getName())) {
+    public CategoryResponse createCategory(CategoryRequest request, User user) {
+        // Check if category already exists for this user
+        if (categoryRepository.existsByNameAndUser(request.getName(), user)) {
             throw new ValidationException("Category with name '" + request.getName() + "' already exists");
         }
 
@@ -97,26 +107,33 @@ public class CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category.setType(request.getType());
+        category.setUser(user);
 
         Category savedCategory = categoryRepository.save(category);
         return mapToCategoryResponse(savedCategory);
     }
 
     /**
-     * Update an existing category.
+     * Update an existing category for the authenticated user.
+     * Users can only update their own categories.
      *
      * @param categoryId the category ID
      * @param request the category request
+     * @param user the authenticated user
      * @return CategoryResponse
      */
-    @CacheEvict(value = "categories", allEntries = true)
-    public CategoryResponse updateCategory(Long categoryId, CategoryRequest request) {
+    public CategoryResponse updateCategory(Long categoryId, CategoryRequest request, User user) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
 
+        // Check if category belongs to the current user (compare by user ID)
+        if (!category.getUser().getId().equals(user.getId())) {
+            throw new ValidationException("You can only update categories that you created");
+        }
+
         // Check if name is being changed and if it conflicts
         if (!category.getName().equals(request.getName()) &&
-            categoryRepository.existsByName(request.getName())) {
+            categoryRepository.existsByNameAndUser(request.getName(), user)) {
             throw new ValidationException("Category with name '" + request.getName() + "' already exists");
         }
 
@@ -130,28 +147,37 @@ public class CategoryService {
     }
 
     /**
-     * Delete a category.
+     * Delete a category for the authenticated user.
+     * Users can only delete their own categories.
      *
      * @param categoryId the category ID
+     * @param user the authenticated user
      */
-    @CacheEvict(value = "categories", allEntries = true)
-    public void deleteCategory(Long categoryId) {
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new ResourceNotFoundException("Category not found with id: " + categoryId);
+    public void deleteCategory(Long categoryId, User user) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+
+        // Check if category belongs to the current user (compare by user ID)
+        if (!category.getUser().getId().equals(user.getId())) {
+            throw new ValidationException("You can only delete categories that you created");
         }
+
         categoryRepository.deleteById(categoryId);
     }
 
     /**
-     * Get category entity by ID.
+     * Get category entity by ID for the authenticated user.
      *
      * @param categoryId the category ID
      * @return Category entity
      */
     @Transactional(readOnly = true)
     public Category getCategoryEntityById(Long categoryId) {
-        return categoryRepository.findById(categoryId)
+        Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+
+        // Note: User ownership check is done at the controller level
+        return category;
     }
 
     /**

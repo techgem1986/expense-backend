@@ -2,6 +2,7 @@ package com.expenseapp.category.domain;
 
 import com.expenseapp.shared.entity.BaseEntity;
 import com.expenseapp.transaction.domain.Transaction;
+import com.expenseapp.user.domain.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,6 +32,10 @@ public class Category extends BaseEntity {
     @Column(name = "type", nullable = false)
     private CategoryType type;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Transaction> transactions = new ArrayList<>();
 
@@ -41,6 +46,13 @@ public class Category extends BaseEntity {
         this.name = name;
         this.description = description;
         this.type = type;
+    }
+
+    public Category(String name, String description, CategoryType type, User user) {
+        this.name = name;
+        this.description = description;
+        this.type = type;
+        this.user = user;
     }
 
     // Getters and setters
@@ -74,6 +86,14 @@ public class Category extends BaseEntity {
 
     public void setType(CategoryType type) {
         this.type = type;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public List<Transaction> getTransactions() {
