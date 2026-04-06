@@ -155,6 +155,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     boolean existsByLinkedRecurringTransactionIdAndTransactionDate(Long recurringTransactionId, LocalDate transactionDate);
 
     /**
+     * Check if a transaction exists for a recurring transaction in the same month and year.
+     */
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END FROM Transaction t WHERE t.linkedRecurringTransactionId = :recurringTransactionId AND YEAR(t.transactionDate) = :year AND MONTH(t.transactionDate) = :month")
+    boolean existsByLinkedRecurringTransactionIdAndMonth(@Param("recurringTransactionId") Long recurringTransactionId, 
+                                                          @Param("year") int year, 
+                                                          @Param("month") int month);
+
+    /**
      * Delete all transactions for a specific user.
      */
     void deleteByUser(User user);

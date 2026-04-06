@@ -124,5 +124,6 @@ INSERT INTO categories (name, description, type) VALUES
 ('Education', 'Courses, books, training', 'EXPENSE'),
 ('Travel', 'Vacations, business trips', 'EXPENSE'),
 ('Housing', 'Rent, mortgage, home maintenance', 'EXPENSE'),
-('Other Expense', 'Miscellaneous expenses', 'EXPENSE')
+('Other Expense', 'Miscellaneous expenses', 'EXPENSE'),
+('Money Transfer', 'Transfer between accounts', 'EXPENSE')
 ON CONFLICT (name) DO NOTHING;

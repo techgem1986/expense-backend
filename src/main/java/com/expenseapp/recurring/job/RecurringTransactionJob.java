@@ -64,6 +64,24 @@ public class RecurringTransactionJob {
     }
 
     private void processRecurringTransaction(RecurringTransaction recurringTransaction) {
+        LocalDate today = LocalDate.now();
+        int currentYear = today.getYear();
+        int currentMonth = today.getMonthValue();
+        
+        // Check if a transaction already exists for this recurring transaction in the current month
+        boolean alreadyExists = transactionService.existsByRecurringTransactionIdAndMonth(
+            recurringTransaction.getId(), currentYear, currentMonth);
+        
+        if (alreadyExists) {
+            log.info("Skipping recurring transaction '{}' - already generated for this month ({}-{})", 
+                recurringTransaction.getName(), currentYear, currentMonth);
+            
+            // Still update the next execution date to prevent repeated checks
+            recurringTransactionService.updateNextExecutionDate(recurringTransaction.getId(), 
+                calculateNextExecutionDate(recurringTransaction));
+            return;
+        }
+        
         // Create a new transaction from the recurring template
         Transaction generatedTransaction = new Transaction();
         generatedTransaction.setUser(recurringTransaction.getUser());
@@ -71,7 +89,7 @@ public class RecurringTransactionJob {
         generatedTransaction.setAmount(recurringTransaction.getAmount());
         generatedTransaction.setType(com.expenseapp.transaction.domain.Transaction.TransactionType.valueOf(recurringTransaction.getType().name()));
         generatedTransaction.setDescription(recurringTransaction.getDescription());
-        generatedTransaction.setTransactionDate(LocalDate.now());
+        generatedTransaction.setTransactionDate(today);
         generatedTransaction.setIsRecurringInstance(true);
         generatedTransaction.setLinkedRecurringTransactionId(recurringTransaction.getId());
         
@@ -87,7 +105,7 @@ public class RecurringTransactionJob {
 
         // Publish event for the generated transaction
         RecurringTransactionGeneratedEvent event = new RecurringTransactionGeneratedEvent(
-            recurringTransaction, savedTransaction, LocalDate.now()
+            recurringTransaction, savedTransaction, today
         );
 
         log.info("Generated recurring transaction: {} - Amount: ₹{}, User: {}", 

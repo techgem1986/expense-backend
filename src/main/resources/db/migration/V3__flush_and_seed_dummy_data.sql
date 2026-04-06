@@ -54,7 +54,8 @@ INSERT INTO categories (name, description, type, created_at, updated_at) VALUES
 ('Education', 'Courses, books, training', 'EXPENSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('Travel', 'Vacations, business trips', 'EXPENSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('Housing', 'Rent, mortgage, home maintenance', 'EXPENSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Other Expense', 'Miscellaneous expenses', 'EXPENSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('Other Expense', 'Miscellaneous expenses', 'EXPENSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Money Transfer', 'Transfer between accounts', 'EXPENSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Insert sample transactions for user 1 (John Doe)
 INSERT INTO transactions (user_id, category_id, amount, type, description, transaction_date, is_recurring_instance, created_at, updated_at) VALUES

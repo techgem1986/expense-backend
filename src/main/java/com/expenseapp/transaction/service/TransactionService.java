@@ -311,6 +311,13 @@ public class TransactionService {
     }
 
     /**
+     * Check if a transaction exists for a recurring transaction in the same month and year.
+     */
+    public boolean existsByRecurringTransactionIdAndMonth(Long recurringTransactionId, int year, int month) {
+        return transactionRepository.existsByLinkedRecurringTransactionIdAndMonth(recurringTransactionId, year, month);
+    }
+
+    /**
      * Update account balances based on transaction.
      * For expense transactions: fromAccount balance decreases
      * For income transactions: toAccount balance increases
