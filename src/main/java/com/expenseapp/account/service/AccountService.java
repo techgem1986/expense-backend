@@ -149,8 +149,25 @@ public class AccountService {
         if (!account.getUser().getId().equals(userId)) {
             throw new ValidationException("Access denied");
         }
+        
+        // Save original values before update
+        BigDecimal originalOpeningBalance = account.getOpeningBalance();
+        BigDecimal originalCurrentBalance = account.getCurrentBalance();
 
         accountMapper.updateEntity(request, account);
+        
+        // Recalculate current balance when opening balance changes
+        if (request.getOpeningBalance() != null && request.getOpeningBalance().compareTo(originalOpeningBalance) != 0) {
+            BigDecimal openingBalanceDelta = request.getOpeningBalance().subtract(originalOpeningBalance);
+            BigDecimal newCurrentBalance = originalCurrentBalance.add(openingBalanceDelta);
+            
+            // Prevent negative balance for asset accounts
+            if (account.isAssetAccount() && newCurrentBalance.compareTo(BigDecimal.ZERO) < 0) {
+                throw new ValidationException("Cannot update opening balance: would result in negative current balance for asset account");
+            }
+            
+            account.setCurrentBalance(newCurrentBalance);
+        }
 
         Account updatedAccount = accountRepository.save(account);
         return accountMapper.toResponse(updatedAccount);
