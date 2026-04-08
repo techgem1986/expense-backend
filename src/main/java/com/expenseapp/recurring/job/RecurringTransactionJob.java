@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Scheduled job for processing recurring transactions.
- * Runs daily at 2:00 AM to generate any due recurring transactions.
+ * Runs every 5 minutes to generate any due recurring transactions.
  */
 @Component
 public class RecurringTransactionJob {
@@ -37,9 +37,9 @@ public class RecurringTransactionJob {
 
     /**
      * Scheduled task to process recurring transactions.
-     * Runs daily at 2:00 AM.
+     * Runs every 5 minutes.
      */
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void processRecurringTransactions() {
         log.info("Starting recurring transaction processing for date: {}", LocalDate.now());
         
