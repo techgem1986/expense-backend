@@ -12,9 +12,13 @@ import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.account.domain.Account;
 import com.expenseapp.account.service.AccountService;
 import com.expenseapp.shared.dto.ApiResponse;
+import com.expenseapp.shared.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -121,6 +125,50 @@ public class RecurringTransactionController {
             .collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.success("Recurring transactions retrieved successfully", response));
+    }
+
+    /**
+     * Get paginated recurring transactions for the authenticated user.
+     *
+     * @param authentication the current authentication
+     * @param page the page number
+     * @param size the page size
+     * @param sort the sort criteria
+     * @return PagedResponse of RecurringTransactionResponse
+     */
+    @GetMapping("/paginated")
+    @PreAuthorize("isAuthenticated()")
+    @Transactional(readOnly = true)
+    @Operation(summary = "Get paginated recurring transactions", description = "Retrieves paginated recurring transactions for the authenticated user")
+    public ResponseEntity<ApiResponse<PagedResponse<RecurringTransactionResponse>>> getPaginatedRecurringTransactions(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+
+        String email = authentication.getName();
+        User user = userService.getUserEntityByEmail(email);
+
+        String[] sortParts = sort.split(",");
+        Sort.Direction direction = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String property = sortParts[0];
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, property));
+        PagedResponse<RecurringTransaction> pagedTransactions = recurringTransactionService.getRecurringTransactionsPaginated(user, pageable);
+
+        List<RecurringTransactionResponse> response = pagedTransactions.getContent().stream()
+            .map(rt -> recurringTransactionMapper.toResponseWithAccounts(
+                rt, user, rt.getCategory(), rt.getFromAccount(), rt.getToAccount()))
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success("Recurring transactions retrieved successfully", new PagedResponse<>(
+            response,
+            (int) pagedTransactions.getTotalElements(),
+            pagedTransactions.getNumber(),
+            pagedTransactions.getSize(),
+            pagedTransactions.getTotalPages(),
+            pagedTransactions.isFirst(),
+            pagedTransactions.isLast()
+        )));
     }
 
     /**

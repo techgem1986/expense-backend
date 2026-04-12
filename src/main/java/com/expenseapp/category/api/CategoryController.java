@@ -5,11 +5,15 @@ import com.expenseapp.category.dto.CategoryRequest;
 import com.expenseapp.category.dto.CategoryResponse;
 import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.shared.dto.ApiResponse;
+import com.expenseapp.shared.dto.PagedResponse;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -47,6 +51,33 @@ public class CategoryController {
         User user = userService.getUserEntityByEmail(email);
         List<CategoryResponse> categories = categoryService.getAllCategories(user);
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", categories));
+    }
+
+    /**
+     * Get paginated categories for the authenticated user.
+     *
+     * @param authentication the current authentication
+     * @param page the page number
+     * @param size the page size
+     * @param sort the sort criteria
+     * @return PagedResponse of CategoryResponse
+     */
+    @GetMapping("/paginated")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get paginated categories", description = "Retrieves paginated categories for the authenticated user")
+    public ResponseEntity<ApiResponse<PagedResponse<CategoryResponse>>> getPaginatedCategories(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        String email = authentication.getName();
+        User user = userService.getUserEntityByEmail(email);
+        String[] sortParts = sort.split(",");
+        Sort.Direction direction = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String property = sortParts[0];
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, property));
+        PagedResponse<CategoryResponse> pagedCategories = categoryService.getAllCategoriesPaginated(user, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", pagedCategories));
     }
 
     /**

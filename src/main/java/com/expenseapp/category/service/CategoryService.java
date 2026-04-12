@@ -4,9 +4,14 @@ import com.expenseapp.category.domain.Category;
 import com.expenseapp.category.dto.CategoryRequest;
 import com.expenseapp.category.dto.CategoryResponse;
 import com.expenseapp.category.repository.CategoryRepository;
+import com.expenseapp.shared.dto.PagedResponse;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -40,6 +45,21 @@ public class CategoryService {
         return categoryRepository.findByUser(user).stream()
                 .map(this::mapToCategoryResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get paginated categories for the authenticated user.
+     *
+     * @param user the authenticated user
+     * @param pageable the pagination information
+     * @return PagedResponse of CategoryResponse
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<CategoryResponse> getAllCategoriesPaginated(User user, Pageable pageable) {
+        Page<Category> page = categoryRepository.findByUser(user, pageable);
+        Page<CategoryResponse> mappedPage = page.map(this::mapToCategoryResponse);
+        return new PagedResponse<>(mappedPage.getContent(), (int) mappedPage.getTotalElements(), 
+                mappedPage.getNumber(), mappedPage.getSize(), mappedPage.getTotalPages(), mappedPage.isFirst(), mappedPage.isLast());
     }
 
     /**

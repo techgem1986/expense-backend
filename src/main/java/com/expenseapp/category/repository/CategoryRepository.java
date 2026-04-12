@@ -2,6 +2,8 @@ package com.expenseapp.category.repository;
 
 import com.expenseapp.category.domain.Category;
 import com.expenseapp.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -45,6 +47,15 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * @return List of categories for the user
      */
     List<Category> findByUser(User user);
+
+    /**
+     * Find categories by user with pagination.
+     *
+     * @param user the user
+     * @param pageable the pagination information
+     * @return Page of categories for the user
+     */
+    Page<Category> findByUser(User user, Pageable pageable);
 
     /**
      * Find categories by user and type.

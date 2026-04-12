@@ -5,8 +5,11 @@ import com.expenseapp.recurring.domain.RecurringTransaction.Frequency;
 import com.expenseapp.recurring.domain.RecurringTransaction.TransactionType;
 import com.expenseapp.recurring.repository.RecurringTransactionRepository;
 import com.expenseapp.user.domain.User;
+import com.expenseapp.shared.dto.PagedResponse;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -77,6 +80,16 @@ public class RecurringTransactionService {
     @Cacheable(value = "recurringByUser", key = "#user.id")
     public List<RecurringTransaction> getRecurringTransactionsByUser(User user) {
         return recurringTransactionRepository.findByUserWithCategoryOrderByCreatedAtDesc(user);
+    }
+
+    /**
+     * Get paginated recurring transactions for a user.
+     */
+    @Cacheable(value = "recurringByUser", key = "#user.id")
+    public PagedResponse<RecurringTransaction> getRecurringTransactionsPaginated(User user, Pageable pageable) {
+        Page<RecurringTransaction> page = recurringTransactionRepository.findByUserWithCategoryOrderByCreatedAtDesc(user, pageable);
+        return new PagedResponse<>(page.getContent(), (int) page.getTotalElements(), 
+                page.getNumber(), page.getSize(), page.getTotalPages(), page.isFirst(), page.isLast());
     }
 
     /**
