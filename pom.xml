@@ -13,7 +13,7 @@
     </parent>
 
     <groupId>com.expenseapp</groupId>
-    <artifactId>expense-management-service</artifactId>
+    <artifactId>expense-backend</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
