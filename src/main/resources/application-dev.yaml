@@ -8,7 +8,7 @@ spring:
       on-profile: dev
 
   datasource:
-    url: jdbc:postgresql://expense-postgres:5432/expense_db
+    url: jdbc:postgresql://postgres:5432/expense_db
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
