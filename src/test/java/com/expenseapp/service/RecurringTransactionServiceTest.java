@@ -129,7 +129,7 @@ class RecurringTransactionServiceTest {
 
     @Test
     void shouldThrowExceptionWhenEndDateIsBeforeStartDate() {
-        testRecurringTransaction.setEndDate(LocalDate.now().minusDays(10));
+        testRecurringTransaction.setEndDate(testRecurringTransaction.getStartDate().minusDays(10));
 
         assertThrows(ValidationException.class, () -> {
             recurringTransactionService.createRecurringTransaction(testRecurringTransaction);
