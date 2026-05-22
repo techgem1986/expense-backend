@@ -21,22 +21,21 @@ import org.mapstruct.factory.Mappers;
 public interface RecurringTransactionMapper {
 
     RecurringTransactionMapper INSTANCE = Mappers.getMapper(RecurringTransactionMapper.class);
-
     CategoryMapper CATEGORY_MAPPER = Mappers.getMapper(CategoryMapper.class);
     UserMapper USER_MAPPER = Mappers.getMapper(UserMapper.class);
 
-@Mapping(target = "user", ignore = true)
-@Mapping(target = "category", ignore = true)
-@Mapping(target = "fromAccount", ignore = true)
-@Mapping(target = "toAccount", ignore = true)
-RecurringTransactionResponse toResponse(RecurringTransaction recurringTransaction);
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "fromAccount", ignore = true)
+    @Mapping(target = "toAccount", ignore = true)
+    RecurringTransactionResponse toResponse(RecurringTransaction recurringTransaction);
 
-@Mapping(target = "user", ignore = true)
-@Mapping(target = "category", ignore = true)
-@Mapping(target = "isActive", ignore = true)
-@Mapping(target = "fromAccount", ignore = true)
-@Mapping(target = "toAccount", ignore = true)
-RecurringTransaction toEntity(RecurringTransactionRequest request);
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "fromAccount", ignore = true)
+    @Mapping(target = "toAccount", ignore = true)
+    RecurringTransaction toEntity(RecurringTransactionRequest request);
 
     default RecurringTransactionResponse toResponseWithUserAndCategory(RecurringTransaction recurringTransaction, User user, Category category) {
         RecurringTransactionResponse response = toResponse(recurringTransaction);
