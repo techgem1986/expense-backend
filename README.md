@@ -1,4 +1,4 @@
-# Expense Management Service
+# LedgerFlow - Expense Management Service
 
 A comprehensive expense management application built with Spring Boot, featuring recurring transactions, budget tracking, and analytics.
 
