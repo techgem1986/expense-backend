@@ -39,16 +39,37 @@ public class CategoryController {
 
     /**
      * Get all categories for the authenticated user.
+     * Supports pagination via optional page/size/sort query params.
+     * When no pagination params are provided, returns all categories (for dropdowns).
      *
      * @param authentication the current authentication
-     * @return List of CategoryResponse
+     * @param page optional page number (0-based)
+     * @param size optional page size
+     * @param sort optional sort criteria
+     * @return List or PagedResponse of CategoryResponse
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get all categories", description = "Retrieves all categories for the authenticated user")
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories(Authentication authentication) {
+    @Operation(summary = "Get all categories", description = "Retrieves all categories for the authenticated user with optional pagination")
+    public ResponseEntity<?> getAllCategories(
+            Authentication authentication,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false, defaultValue = "createdAt,desc") String sort) {
         String email = authentication.getName();
         User user = userService.getUserEntityByEmail(email);
+        
+        // If pagination params are provided, return paginated results
+        if (page != null && size != null) {
+            String[] sortParts = sort.split(",");
+            Sort.Direction direction = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+            String property = sortParts[0];
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, property));
+            PagedResponse<CategoryResponse> pagedCategories = categoryService.getAllCategoriesPaginated(user, pageable);
+            return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", pagedCategories));
+        }
+        
+        // Otherwise return all categories (non-paginated)
         List<CategoryResponse> categories = categoryService.getAllCategories(user);
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", categories));
     }

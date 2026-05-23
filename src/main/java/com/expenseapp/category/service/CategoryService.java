@@ -7,6 +7,7 @@ import com.expenseapp.category.repository.CategoryRepository;
 import com.expenseapp.shared.dto.PagedResponse;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import com.expenseapp.transaction.repository.TransactionRepository;
 import com.expenseapp.user.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +29,11 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final TransactionRepository transactionRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, TransactionRepository transactionRepository) {
         this.categoryRepository = categoryRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     /**
@@ -169,6 +172,7 @@ public class CategoryService {
     /**
      * Delete a category for the authenticated user.
      * Users can only delete their own categories.
+     * Prevents deletion if the category is used by existing transactions.
      *
      * @param categoryId the category ID
      * @param user the authenticated user
@@ -180,6 +184,13 @@ public class CategoryService {
         // Check if category belongs to the current user (compare by user ID)
         if (!category.getUser().getId().equals(user.getId())) {
             throw new ValidationException("You can only delete categories that you created");
+        }
+
+        // Check if category is used by any transactions
+        if (transactionRepository.existsByCategory(category)) {
+            throw new ValidationException(
+                "Cannot delete category '" + category.getName() + "' because it is used by existing transactions. " +
+                "Reassign transactions to another category first.");
         }
 
         categoryRepository.deleteById(categoryId);

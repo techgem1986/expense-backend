@@ -10,6 +10,7 @@ import com.expenseapp.category.domain.Category;
 import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import com.expenseapp.transaction.repository.TransactionRepository;
 import com.expenseapp.transaction.service.TransactionService;
 import com.expenseapp.user.domain.User;
 import org.springframework.cache.annotation.Cacheable;
@@ -35,13 +36,16 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final CategoryService categoryService;
     private final TransactionService transactionService;
+    private final TransactionRepository transactionRepository;
 
     public BudgetService(BudgetRepository budgetRepository,
                         CategoryService categoryService,
-                        TransactionService transactionService) {
+                        TransactionService transactionService,
+                        TransactionRepository transactionRepository) {
         this.budgetRepository = budgetRepository;
         this.categoryService = categoryService;
         this.transactionService = transactionService;
+        this.transactionRepository = transactionRepository;
     }
 
     /**
@@ -229,9 +233,9 @@ public class BudgetService {
             // All categories
             return transactionService.calculateTotalExpensesByDateRange(budget.getUser(), startDate, endDate);
         } else {
-            // Specific categories - this would need a custom query
-            // For now, return zero (would need to implement category-specific spending)
-            return BigDecimal.ZERO;
+            // Specific categories - query transactions filtered by the budget's categories
+            return transactionRepository.calculateTotalExpensesByUserAndCategories(
+                budget.getUser(), categoryIds, startDate, endDate);
         }
     }
 

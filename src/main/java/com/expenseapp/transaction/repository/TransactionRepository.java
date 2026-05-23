@@ -163,6 +163,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                           @Param("month") int month);
 
     /**
+     * Calculate total expenses for a user filtered by specific categories.
+     * Used for budget tracking when a budget is tied to specific categories.
+     */
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +
+           "WHERE t.user = :user AND t.type = 'EXPENSE' " +
+           "AND t.category.id IN :categoryIds " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate")
+    BigDecimal calculateTotalExpensesByUserAndCategories(@Param("user") User user,
+                                                         @Param("categoryIds") List<Long> categoryIds,
+                                                         @Param("startDate") LocalDate startDate,
+                                                         @Param("endDate") LocalDate endDate);
+
+    /**
+     * Check if any transactions exist for a given category.
+     * Used to prevent deletion of categories that have linked transactions.
+     */
+    boolean existsByCategory(Category category);
+
+    /**
      * Delete all transactions for a specific user.
      */
     void deleteByUser(User user);
