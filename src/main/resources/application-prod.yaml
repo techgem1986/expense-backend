@@ -23,6 +23,9 @@ spring:
       idle-timeout: 300000
       max-lifetime: 1200000
       connection-timeout: 20000
+      data-source-properties:
+        sslmode: require
+        ssl: true
 
   jpa:
     hibernate:
@@ -51,14 +54,17 @@ spring:
 
   quartz:
     job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
     properties:
       org.quartz.threadPool.threadCount: 5
       org.quartz.threadPool.threadPriority: 5
-      org.quartz.jobStore.class: org.quartz.simpl.JobStoreTX
+      org.quartz.jobStore.class: org.quartz.impl.jdbcjobstore.JobStoreTX
       org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
       org.quartz.jobStore.useProperties: false
       org.quartz.jobStore.tablePrefix: QRTZ_
       org.quartz.jobStore.isClustered: false
+      org.quartz.jobStore.dataSource: quartzDataSource
       org.quartz.plugin.triggers.class: org.quartz.plugins.management.ShutdownHookPlugin
 
   security:
