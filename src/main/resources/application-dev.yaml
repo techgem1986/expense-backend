@@ -89,7 +89,7 @@ app:
     secret: "your-secret-key-for-development-only-change-this-in-production"
     expiration: 86400
   cors:
-    allowed-origins: "http://localhost:3000,http://localhost:8080"
+    allowed-origins: "http://localhost:3000,http://localhost:8080,https://expense-frontend-xhyh.onrender.com"
     allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
     allowed-headers: "*"
     allow-credentials: true
