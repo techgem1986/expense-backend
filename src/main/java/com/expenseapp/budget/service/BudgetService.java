@@ -8,11 +8,13 @@ import com.expenseapp.budget.dto.BudgetResponse;
 import com.expenseapp.budget.repository.BudgetRepository;
 import com.expenseapp.category.domain.Category;
 import com.expenseapp.category.service.CategoryService;
+import com.expenseapp.shared.config.MonitoringMetricsService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.transaction.repository.TransactionRepository;
 import com.expenseapp.transaction.service.TransactionService;
 import com.expenseapp.user.domain.User;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -37,15 +39,18 @@ public class BudgetService {
     private final CategoryService categoryService;
     private final TransactionService transactionService;
     private final TransactionRepository transactionRepository;
+    private final MonitoringMetricsService metricsService;
 
     public BudgetService(BudgetRepository budgetRepository,
                         CategoryService categoryService,
                         TransactionService transactionService,
-                        TransactionRepository transactionRepository) {
+                        TransactionRepository transactionRepository,
+                        MonitoringMetricsService metricsService) {
         this.budgetRepository = budgetRepository;
         this.categoryService = categoryService;
         this.transactionService = transactionService;
         this.transactionRepository = transactionRepository;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -82,6 +87,7 @@ public class BudgetService {
         // Calculate current spending
         BigDecimal currentSpent = calculateCurrentSpending(savedBudget);
 
+        metricsService.recordBudgetCreated();
         return mapToBudgetResponse(savedBudget, currentSpent);
     }
 
@@ -222,6 +228,8 @@ public class BudgetService {
      * Calculate current spending for a budget.
      */
     private BigDecimal calculateCurrentSpending(Budget budget) {
+        Timer.Sample timerSample = metricsService.startBudgetCalculationTimer();
+
         LocalDate startDate = budget.getStartDate();
         LocalDate endDate = calculateEndDate(budget);
 
@@ -229,14 +237,32 @@ public class BudgetService {
                 .map(bc -> bc.getCategory().getId())
                 .collect(Collectors.toList());
 
+        BigDecimal result;
         if (categoryIds.isEmpty()) {
             // All categories
-            return transactionService.calculateTotalExpensesByDateRange(budget.getUser(), startDate, endDate);
+            result = transactionService.calculateTotalExpensesByDateRange(budget.getUser(), startDate, endDate);
         } else {
             // Specific categories - query transactions filtered by the budget's categories
-            return transactionRepository.calculateTotalExpensesByUserAndCategories(
+            result = transactionRepository.calculateTotalExpensesByUserAndCategories(
                 budget.getUser(), categoryIds, startDate, endDate);
         }
+
+        metricsService.stopBudgetCalculationTimer(timerSample);
+
+        // Record budget exceeded if applicable
+        if (budget.getLimitAmount() != null && result.compareTo(budget.getLimitAmount()) > 0) {
+            metricsService.recordBudgetExceeded();
+        }
+
+        // Record budget alert threshold exceeded if applicable
+        if (budget.getAlertThreshold() != null) {
+            BigDecimal thresholdAmount = budget.getLimitAmount().multiply(budget.getAlertThreshold());
+            if (result.compareTo(thresholdAmount) >= 0) {
+                metricsService.recordBudgetAlertTriggered();
+            }
+        }
+
+        return result;
     }
 
     /**

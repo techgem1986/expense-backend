@@ -1,0 +1,49 @@
+# Prometheus Configuration for Expense Management System
+# Scrapes backend metrics and remote_writes to Grafana Cloud
+#
+# Required env vars (set in docker-compose.prod.yml or .env):
+#   GRAFANA_CLOUD_PROMETHEUS_URL  - e.g. https://prometheus-prod-XX-XX.grafana.net/api/v1/write
+#   GRAFANA_CLOUD_API_KEY        - Grafana Cloud API key (MetricsPublisher role)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# Remote write to Grafana Cloud Prometheus (Mimir)
+remote_write:
+  - url: "${GRAFANA_CLOUD_PROMETHEUS_URL}"
+    basic_auth:
+      username: "${GRAFANA_CLOUD_PROMETHEUS_USER}"
+      password: "${GRAFANA_CLOUD_API_KEY}"
+    queue_config:
+      max_samples_per_send: 500
+      batch_send_deadline: 5s
+      max_shards: 20
+    write_relabel_configs:
+      # Only send expense-related and JVM metrics (filter out noisy internal metrics)
+      - source_labels: [__name__]
+        regex: '(expense_.+|jvm_.+|system_.+|process_.+|http_.+|hikaricp_.+|tomcat_.+)'
+        action: keep
+
+# Scrape configurations
+scrape_configs:
+  # Spring Boot Application Metrics (prod profile)
+  # Backend runs on the same host as Prometheus
+  - job_name: 'expense-backend'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets: ['localhost:8080']
+        labels:
+          application: 'expense-backend'
+          environment: 'production'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          application: 'prometheus'
+          environment: 'production'

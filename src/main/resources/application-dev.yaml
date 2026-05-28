@@ -58,7 +58,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info
       base-path: /actuator
   endpoint:
     health:
@@ -66,10 +66,6 @@ management:
   health:
     redis:
       enabled: false
-  metrics:
-    export:
-      prometheus:
-        enabled: true
 
 logging:
   level:

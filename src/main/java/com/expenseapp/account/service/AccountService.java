@@ -6,6 +6,7 @@ import com.expenseapp.account.dto.AccountRequest;
 import com.expenseapp.account.dto.AccountResponse;
 import com.expenseapp.account.mapper.AccountMapper;
 import com.expenseapp.account.repository.AccountRepository;
+import com.expenseapp.shared.config.MonitoringMetricsService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.user.domain.User;
@@ -31,13 +32,16 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final AccountMapper accountMapper;
+    private final MonitoringMetricsService metricsService;
 
     public AccountService(AccountRepository accountRepository, 
                          UserRepository userRepository, 
-                         AccountMapper accountMapper) {
+                         AccountMapper accountMapper,
+                         MonitoringMetricsService metricsService) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.accountMapper = accountMapper;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -64,6 +68,7 @@ public class AccountService {
         account.setCurrentBalance(request.getOpeningBalance());
 
         Account savedAccount = accountRepository.save(account);
+        metricsService.recordAccountCreated();
         return accountMapper.toResponse(savedAccount);
     }
 
@@ -204,6 +209,7 @@ public class AccountService {
 
         account.setIsActive(false);
         accountRepository.save(account);
+        metricsService.recordAccountDeleted();
     }
 
     /**

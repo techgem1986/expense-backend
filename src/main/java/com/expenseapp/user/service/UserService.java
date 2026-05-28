@@ -1,5 +1,6 @@
 package com.expenseapp.user.service;
 
+import com.expenseapp.shared.config.MonitoringMetricsService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.user.domain.User;
@@ -23,11 +24,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final MonitoringMetricsService metricsService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, MonitoringMetricsService metricsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -55,6 +58,9 @@ public class UserService {
         // Generate JWT token
         String token = jwtService.generateToken(savedUser.getEmail(), savedUser.getId());
 
+        // Record metrics
+        metricsService.recordUserRegistered();
+
         // Create response
         UserResponse userResponse = mapToUserResponse(savedUser);
         return new AuthResponse(token, userResponse);
@@ -78,6 +84,9 @@ public class UserService {
 
         // Generate JWT token
         String token = jwtService.generateToken(user.getEmail(), user.getId());
+
+        // Record metrics
+        metricsService.recordUserLogin();
 
         // Create response
         UserResponse userResponse = mapToUserResponse(user);

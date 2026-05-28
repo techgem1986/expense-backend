@@ -7,8 +7,10 @@ import com.expenseapp.account.domain.Account;
 import com.expenseapp.account.repository.AccountRepository;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.category.domain.Category;
+import com.expenseapp.shared.config.MonitoringMetricsService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -32,11 +34,15 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final MonitoringMetricsService metricsService;
 
     @Autowired
-    public TransactionService(TransactionRepository transactionRepository, AccountRepository accountRepository) {
+    public TransactionService(TransactionRepository transactionRepository,
+                              AccountRepository accountRepository,
+                              MonitoringMetricsService metricsService) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -63,10 +69,16 @@ public class TransactionService {
         // that should be set on the transaction entity before this method is called
         // The controller should set these from the TransactionRequest
 
+        Timer.Sample timerSample = metricsService.startTransactionCreationTimer();
+
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Update account balances
         updateAccountBalancesOnTransaction(savedTransaction, true);
+
+        // Record metrics
+        metricsService.stopTransactionCreationTimer(timerSample);
+        metricsService.recordTransactionCreated(savedTransaction.getType().name());
 
         return savedTransaction;
     }
@@ -93,7 +105,10 @@ public class TransactionService {
      */
     @Transactional(readOnly = true)
     public Page<Transaction> getTransactionsByUser(User user, Pageable pageable) {
-        return transactionRepository.findByUserWithCategoryAndAccounts(user, pageable);
+        Timer.Sample timerSample = metricsService.startTransactionQueryTimer();
+        Page<Transaction> result = transactionRepository.findByUserWithCategoryAndAccounts(user, pageable);
+        metricsService.stopTransactionQueryTimer(timerSample);
+        return result;
     }
 
     /**
@@ -216,6 +231,7 @@ public class TransactionService {
         updateAccountBalancesOnTransaction(transaction, false);
         
         transactionRepository.delete(transaction);
+        metricsService.recordTransactionDeleted();
     }
 
     /**
