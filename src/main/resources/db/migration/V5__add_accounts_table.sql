@@ -1,12 +1,12 @@
 -- Add accounts table for managing user financial accounts
--- Accounts can be savings, loans, investments, mutual funds, etc.
+-- Accounts can be savings, salary, current, investment, mutual funds, credit cards
 
 -- Accounts table
 CREATE TABLE IF NOT EXISTS accounts (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    account_type VARCHAR(50) NOT NULL CHECK (account_type IN ('SAVINGS', 'CHECKING', 'LOAN', 'INVESTMENT', 'MUTUAL_FUND', 'CREDIT_CARD', 'CASH', 'OTHER')),
+    account_type VARCHAR(50) NOT NULL CHECK (account_type IN ('SAVINGS', 'SALARY', 'CURRENT', 'INVESTMENT', 'MUTUAL_FUND', 'CREDIT_CARD')),
     bank_name VARCHAR(255),
     account_number VARCHAR(100),
     ifsc_code VARCHAR(20),
@@ -34,10 +34,10 @@ CREATE INDEX IF NOT EXISTS idx_accounts_user_type ON accounts(user_id, account_t
 CREATE INDEX IF NOT EXISTS idx_transactions_from_account ON transactions(from_account_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_to_account ON transactions(to_account_id);
 
--- Insert default Cash account for existing users (if any)
+-- Insert default Savings account for existing users (if any)
 INSERT INTO accounts (user_id, name, account_type, opening_balance, current_balance, description, is_active)
-SELECT id, 'Cash', 'CASH', 0.00, 0.00, 'Default cash account', TRUE
+SELECT id, 'Savings', 'SAVINGS', 0.00, 0.00, 'Default savings account', TRUE
 FROM users
 WHERE NOT EXISTS (
-    SELECT 1 FROM accounts a WHERE a.user_id = users.id AND a.account_type = 'CASH'
+    SELECT 1 FROM accounts a WHERE a.user_id = users.id
 );
