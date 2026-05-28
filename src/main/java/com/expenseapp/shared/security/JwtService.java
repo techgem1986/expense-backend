@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 
 import java.time.Instant;
 import java.security.Key;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
@@ -25,12 +26,12 @@ public class JwtService {
     private static final Logger log = LoggerFactory.getLogger(JwtService.class);
 
     private final JwtDecoder jwtDecoder;
-    private final String jwtSecret;
+    private final SecretKey secretKey;
     private final long jwtExpiration;
 
-    public JwtService(JwtDecoder jwtDecoder, String jwtSecret, long jwtExpiration) {
+    public JwtService(JwtDecoder jwtDecoder, SecretKey secretKey, long jwtExpiration) {
         this.jwtDecoder = jwtDecoder;
-        this.jwtSecret = jwtSecret;
+        this.secretKey = secretKey;
         this.jwtExpiration = jwtExpiration;
     }
 
@@ -51,7 +52,8 @@ public class JwtService {
                     claimsSet
             );
 
-            signedJWT.sign(new MACSigner(jwtSecret.getBytes()));
+            MACSigner signer = new MACSigner(secretKey);
+            signedJWT.sign(signer);
 
             return signedJWT.serialize();
         } catch (Exception e) {

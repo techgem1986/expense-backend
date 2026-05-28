@@ -24,10 +24,15 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.SecretKey;
+import javax.crypto.Mac;
 import com.expenseapp.shared.security.RateLimitingFilter;
 import com.expenseapp.shared.security.JwtService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Arrays;
 
 @Configuration
@@ -47,8 +52,34 @@ public class SecurityConfiguration {
     @Value("${app.cors.allow-credentials}")
     private boolean allowCredentials;
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
+
     @Value("${app.jwt.secret}")
     private String jwtSecret;
+
+    /**
+     * Ensures the JWT secret key is at least 256 bits (32 bytes) as required by HS256.
+     * If the provided secret is shorter than 32 bytes, it derives a 256-bit key
+     * by hashing the secret with SHA-256.
+     */
+    private SecretKey getValidatedSecretKey() {
+        byte[] secretBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+
+        if (secretBytes.length < 32) {
+            log.warn("JWT secret is only {} bytes ({} bits), which is less than the required 256 bits for HS256. "
+                    + "Deriving a proper key using SHA-256 hash. "
+                    + "Please set APP_JWT_SECRET to a value with at least 32 characters.",
+                    secretBytes.length, secretBytes.length * 8);
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                secretBytes = digest.digest(secretBytes);
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to derive JWT secret key", e);
+            }
+        }
+
+        return new SecretKeySpec(secretBytes, "HmacSHA256");
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, RateLimitingFilter rateLimitingFilter) throws Exception {
@@ -77,19 +108,20 @@ public class SecurityConfiguration {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        SecretKey secretKey = new SecretKeySpec(jwtSecret.getBytes(), "HmacSHA256");
+        SecretKey secretKey = getValidatedSecretKey();
         return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
 
     @Bean
     public JwtEncoder jwtEncoder() {
-        SecretKey secretKey = new SecretKeySpec(jwtSecret.getBytes(), "HmacSHA256");
+        SecretKey secretKey = getValidatedSecretKey();
         return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
     }
 
     @Bean
     public JwtService jwtService(JwtDecoder jwtDecoder) {
-        return new JwtService(jwtDecoder, jwtSecret, 86400L); // 24 hours expiration
+        SecretKey secretKey = getValidatedSecretKey();
+        return new JwtService(jwtDecoder, secretKey, 86400L); // 24 hours expiration
     }
 
     @Bean
