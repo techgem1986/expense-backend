@@ -187,17 +187,16 @@ public class Account extends BaseEntity {
      */
     public boolean isAssetAccount() {
         return accountType == AccountType.SAVINGS ||
-               accountType == AccountType.CHECKING ||
+               accountType == AccountType.SALARY ||
+               accountType == AccountType.CURRENT ||
                accountType == AccountType.INVESTMENT ||
-               accountType == AccountType.MUTUAL_FUND ||
-               accountType == AccountType.CASH;
+               accountType == AccountType.MUTUAL_FUND;
     }
 
     /**
      * Check if this account is a liability account (negative balance is bad).
      */
     public boolean isLiabilityAccount() {
-        return accountType == AccountType.LOAN ||
-               accountType == AccountType.CREDIT_CARD;
+        return accountType == AccountType.CREDIT_CARD;
     }
 }

@@ -79,7 +79,7 @@ class TransactionRepositoryTest {
         // Create and persist test accounts
         testFromAccount = new Account();
         testFromAccount.setName("Checking Account");
-        testFromAccount.setAccountType(AccountType.CHECKING);
+        testFromAccount.setAccountType(AccountType.CURRENT);
         testFromAccount.setBankName("Test Bank");
         testFromAccount.setCurrentBalance(new BigDecimal("1000.00"));
         testFromAccount.setOpeningBalance(new BigDecimal("1000.00"));

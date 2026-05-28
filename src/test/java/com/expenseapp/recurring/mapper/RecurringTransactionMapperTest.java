@@ -42,7 +42,7 @@ class RecurringTransactionMapperTest {
         // Category user relationship not supported in entity
         testCategory.setId(1L);
 
-        testFromAccount = new Account(testUser, "From Account", AccountType.CHECKING, BigDecimal.valueOf(1000));
+        testFromAccount = new Account(testUser, "From Account", AccountType.CURRENT, BigDecimal.valueOf(1000));
         testFromAccount.setId(1L);
 
         testToAccount = new Account(testUser, "To Account", AccountType.SAVINGS, BigDecimal.valueOf(500));

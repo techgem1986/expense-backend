@@ -5,13 +5,11 @@ package com.expenseapp.account.domain;
  */
 public enum AccountType {
     SAVINGS("Savings"),
-    CHECKING("Checking"),
-    LOAN("Loan"),
+    SALARY("Salary"),
+    CURRENT("Current"),
     INVESTMENT("Investment"),
-    MUTUAL_FUND("Mutual Fund"),
-    CREDIT_CARD("Credit Card"),
-    CASH("Cash"),
-    OTHER("Other");
+    MUTUAL_FUND("Mutual Funds"),
+    CREDIT_CARD("Credit Cards");
 
     private final String displayName;
 
