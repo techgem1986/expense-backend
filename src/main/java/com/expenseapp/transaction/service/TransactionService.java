@@ -415,9 +415,16 @@ public class TransactionService {
             if (transaction.getToAccount() == null) {
                 throw new ValidationException("To Account is mandatory for income transactions");
             }
+        } else if (transaction.getType() == TransactionType.TRANSFER) {
+            if (transaction.getFromAccount() == null) {
+                throw new ValidationException("From Account is mandatory for transfer transactions");
+            }
+            if (transaction.getToAccount() == null) {
+                throw new ValidationException("To Account is mandatory for transfer transactions");
+            }
         }
 
-        // Self-transfer validation: if both accounts are set (e.g., Money Transfer category),
+        // Self-transfer validation: if both accounts are set,
         // ensure they are different accounts
         if (transaction.getFromAccount() != null && transaction.getToAccount() != null) {
             if (transaction.getFromAccount().getId().equals(transaction.getToAccount().getId())) {

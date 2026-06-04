@@ -185,7 +185,7 @@ public class Transaction extends BaseEntity {
     }
 
     public enum TransactionType {
-        INCOME, EXPENSE
+        INCOME, EXPENSE, TRANSFER
     }
 
     @Override

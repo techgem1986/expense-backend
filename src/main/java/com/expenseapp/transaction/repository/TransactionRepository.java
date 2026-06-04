@@ -73,7 +73,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     /**
      * Find a transaction by ID with category and accounts eagerly fetched.
      */
-    @Query("SELECT t FROM Transaction t JOIN FETCH t.category c LEFT JOIN FETCH t.fromAccount f LEFT JOIN FETCH t.toAccount to WHERE t.id = :id")
+    @Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.category c LEFT JOIN FETCH t.fromAccount f LEFT JOIN FETCH t.toAccount to WHERE t.id = :id")
     Optional<Transaction> findByIdWithCategoryAndAccounts(@Param("id") Long id);
 
     /**
