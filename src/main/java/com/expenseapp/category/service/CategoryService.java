@@ -24,9 +24,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class CategoryService {
 
-    // Default/system user ID whose categories are visible to all users
-    private static final Long DEFAULT_USER_ID = 1L;
-
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
 
@@ -36,21 +33,20 @@ public class CategoryService {
     }
 
     /**
-     * Get all categories for the authenticated user including system-wide categories
-     * (categories owned by the default user with ID 1).
+     * Get all categories for the authenticated user (user-specific only).
      *
      * @param user the authenticated user
      * @return List of CategoryResponse
      */
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAllCategories(User user) {
-        return categoryRepository.findByUserOrDefaultUser(user.getId(), DEFAULT_USER_ID).stream()
+        return categoryRepository.findByUser(user).stream()
                 .map(this::mapToCategoryResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get paginated categories for the authenticated user including system-wide categories.
+     * Get paginated categories for the authenticated user (user-specific only).
      *
      * @param user the authenticated user
      * @param pageable the pagination information
@@ -58,14 +54,14 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public PagedResponse<CategoryResponse> getAllCategoriesPaginated(User user, Pageable pageable) {
-        Page<Category> page = categoryRepository.findByUserOrDefaultUser(user.getId(), DEFAULT_USER_ID, pageable);
+        Page<Category> page = categoryRepository.findByUser(user, pageable);
         Page<CategoryResponse> mappedPage = page.map(this::mapToCategoryResponse);
         return new PagedResponse<>(mappedPage.getContent(), (int) mappedPage.getTotalElements(),
                 mappedPage.getNumber(), mappedPage.getSize(), mappedPage.getTotalPages(), mappedPage.isFirst(), mappedPage.isLast());
     }
 
     /**
-     * Get categories by type for the authenticated user including system-wide categories.
+     * Get categories by type for the authenticated user (user-specific only).
      *
      * @param user the authenticated user
      * @param type the category type (INCOME or EXPENSE)
@@ -73,7 +69,7 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public List<CategoryResponse> getCategoriesByType(User user, Category.CategoryType type) {
-        return categoryRepository.findByUserOrDefaultUserAndType(user.getId(), DEFAULT_USER_ID, type).stream()
+        return categoryRepository.findByUserAndType(user, type).stream()
                 .map(this::mapToCategoryResponse)
                 .collect(Collectors.toList());
     }
@@ -100,12 +96,8 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryByName(String name, User user) {
-        Category category = categoryRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with name: " + name));
-
-        if (!category.getUser().getId().equals(user.getId())) {
-            throw new ResourceNotFoundException("Category not found with name: " + name);
-        }
+        Category category = categoryRepository.findByNameAndUser(name, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with name: " + name + " for current user"));
 
         return mapToCategoryResponse(category);
     }

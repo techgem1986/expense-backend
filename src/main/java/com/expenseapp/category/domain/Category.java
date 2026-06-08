@@ -13,7 +13,7 @@ import java.util.List;
  * Category entity for organizing transactions into logical groups.
  */
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", uniqueConstraints = @UniqueConstraint(columnNames = {"name", "user_id"}))
 public class Category extends BaseEntity {
 
     @Id
@@ -21,7 +21,7 @@ public class Category extends BaseEntity {
     private Long id;
 
     @NotBlank
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "description")

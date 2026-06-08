@@ -32,7 +32,7 @@ A comprehensive expense management application built with Spring Boot, featuring
 
 1. **Clone and navigate to the project**
    ```bash
-   cd expense-management-service
+   cd expense-backend
    ```
 
 2. **Start infrastructure (PostgreSQL + Redis)**

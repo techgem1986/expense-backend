@@ -121,9 +121,17 @@ class RecurringTransactionTest {
 
     @Test
     void testFrequencyEnum() {
-        assertEquals(1, RecurringTransaction.Frequency.values().length);
+        assertEquals(5, RecurringTransaction.Frequency.values().length);
+        assertEquals(RecurringTransaction.Frequency.DAILY, 
+                RecurringTransaction.Frequency.valueOf("DAILY"));
+        assertEquals(RecurringTransaction.Frequency.WEEKLY, 
+                RecurringTransaction.Frequency.valueOf("WEEKLY"));
         assertEquals(RecurringTransaction.Frequency.MONTHLY, 
                 RecurringTransaction.Frequency.valueOf("MONTHLY"));
+        assertEquals(RecurringTransaction.Frequency.QUARTERLY, 
+                RecurringTransaction.Frequency.valueOf("QUARTERLY"));
+        assertEquals(RecurringTransaction.Frequency.YEARLY, 
+                RecurringTransaction.Frequency.valueOf("YEARLY"));
     }
 
     @Test

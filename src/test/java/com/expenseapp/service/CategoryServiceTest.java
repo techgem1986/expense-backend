@@ -88,7 +88,7 @@ class CategoryServiceTest {
 
     @Test
     void shouldGetCategoryByName() {
-        when(categoryRepository.findByName("Food")).thenReturn(Optional.of(testCategory));
+        when(categoryRepository.findByNameAndUser("Food", testUser)).thenReturn(Optional.of(testCategory));
 
         CategoryResponse response = categoryService.getCategoryByName("Food", testUser);
 
@@ -98,7 +98,7 @@ class CategoryServiceTest {
 
     @Test
     void shouldThrowExceptionWhenCategoryNameNotFound() {
-        when(categoryRepository.findByName("Food")).thenReturn(Optional.empty());
+        when(categoryRepository.findByNameAndUser("Food", testUser)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
             categoryService.getCategoryByName("Food", testUser);
@@ -107,12 +107,7 @@ class CategoryServiceTest {
 
     @Test
     void shouldThrowExceptionWhenCategoryNotOwnedByUser() {
-        User otherUser = new User();
-        otherUser.setId(2L);
-        Category otherCategory = new Category("Food", "Food expenses", EXPENSE, otherUser);
-        otherCategory.setId(1L);
-        
-        when(categoryRepository.findByName("Food")).thenReturn(Optional.of(otherCategory));
+        when(categoryRepository.findByNameAndUser("Food", testUser)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
             categoryService.getCategoryByName("Food", testUser);

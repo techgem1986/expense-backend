@@ -250,8 +250,20 @@ public class RecurringTransaction extends BaseEntity {
         
         // Calculate next execution date based on frequency
         switch (frequency) {
+            case DAILY:
+                nextDate = today.plusDays(1);
+                break;
+            case WEEKLY:
+                nextDate = today.plusWeeks(1);
+                break;
             case MONTHLY:
                 nextDate = calculateNextMonthlyDate(startDate, dayOfMonth, today);
+                break;
+            case QUARTERLY:
+                nextDate = calculateNextQuarterlyDate(startDate, dayOfMonth, today);
+                break;
+            case YEARLY:
+                nextDate = calculateNextYearlyDate(startDate, dayOfMonth, today);
                 break;
             default:
                 // Default to monthly behavior
@@ -288,11 +300,51 @@ public class RecurringTransaction extends BaseEntity {
         return nextDate;
     }
 
+    private LocalDate calculateNextQuarterlyDate(LocalDate startDate, Integer dayOfMonth, LocalDate today) {
+        int targetDay = dayOfMonth != null ? dayOfMonth : startDate.getDayOfMonth();
+        
+        // Find the next quarter boundary (Jan, Apr, Jul, Oct)
+        LocalDate nextDate = today.plusMonths(3).withDayOfMonth(1);
+        int daysInMonth = nextDate.lengthOfMonth();
+        int actualDay = Math.min(targetDay, daysInMonth);
+        nextDate = nextDate.withDayOfMonth(actualDay);
+        
+        // If this date has already passed, move to next quarter
+        if (nextDate.isBefore(today)) {
+            nextDate = nextDate.plusMonths(3);
+            daysInMonth = nextDate.lengthOfMonth();
+            actualDay = Math.min(targetDay, daysInMonth);
+            nextDate = nextDate.withDayOfMonth(actualDay);
+        }
+        
+        return nextDate;
+    }
+
+    private LocalDate calculateNextYearlyDate(LocalDate startDate, Integer dayOfMonth, LocalDate today) {
+        int targetDay = dayOfMonth != null ? dayOfMonth : startDate.getDayOfMonth();
+        
+        // Start from next year
+        LocalDate nextDate = LocalDate.of(today.getYear() + 1, startDate.getMonth(), 1);
+        int daysInMonth = nextDate.lengthOfMonth();
+        int actualDay = Math.min(targetDay, daysInMonth);
+        nextDate = nextDate.withDayOfMonth(actualDay);
+        
+        // If this date has already passed, move to next year
+        if (nextDate.isBefore(today)) {
+            nextDate = nextDate.plusYears(1);
+            daysInMonth = nextDate.lengthOfMonth();
+            actualDay = Math.min(targetDay, daysInMonth);
+            nextDate = nextDate.withDayOfMonth(actualDay);
+        }
+        
+        return nextDate;
+    }
+
     public enum TransactionType {
         INCOME, EXPENSE
     }
 
     public enum Frequency {
-        MONTHLY
+        DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
     }
 }
