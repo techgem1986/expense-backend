@@ -1,0 +1,51 @@
+# ============================================================================
+# Keep-alive ping for the Render free web service.
+# ============================================================================
+# Render's free web services spin down after 15 minutes of inactivity; the next
+# request then pays a ~40-60s cold start. This workflow pings the backend health
+# endpoint on a schedule so the instance stays warm.
+#
+# IMPORTANT
+#   * Scheduled workflows run only from the repository's DEFAULT branch.
+#   * GitHub may DELAY scheduled runs under load (sometimes by 10-30 min) and it
+#     disables schedules after 60 days of repository inactivity. If you need
+#     guaranteed pinging, use a dedicated uptime service (UptimeRobot,
+#     cron-job.org) or a Cloudflare Worker Cron Trigger instead.
+#   * Free minutes: unlimited for PUBLIC repos, ~2000 min/month for private ones.
+#     A 10-minute cadence stays within that.
+#   * Keeping the instance warm consumes Render's free monthly instance-hours.
+# ============================================================================
+name: Keep-alive
+
+on:
+  schedule:
+    # Every 10 minutes (Render idles out at 15).
+    - cron: '*/10 * * * *'
+  # Lets you trigger a run manually from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+env:
+  # Update this if the Render service URL changes.
+  HEALTH_URL: https://expense-backend-vrxm.onrender.com/actuator/health
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping backend health endpoint
+        run: |
+          set -euo pipefail
+          echo "Pinging $HEALTH_URL"
+          # --max-time 90 so a cold start (~40-60s) still counts as a success.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 90 "$HEALTH_URL")
+          echo "HTTP $code"
+          # 200 = healthy; any other code fails the run so it shows up red.
+          test "$code" = "200"
