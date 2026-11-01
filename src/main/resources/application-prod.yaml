@@ -9,8 +9,15 @@ spring:
 
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
+
+  # Production applies only the schema migrations (no demo/seed data).
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
 
   datasource:
     url: ${DATABASE_URL}
@@ -29,7 +36,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      # Schema is owned by Flyway - Hibernate must not modify it.
+      ddl-auto: none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     properties:
@@ -43,14 +51,15 @@ spring:
         order_updates: true
     open-in-view: false
 
-  redis:
-    url: ${REDIS_URL}
-    timeout: 2000ms
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
+  data:
+    redis:
+      url: ${REDIS_URL}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
   quartz:
     job-store-type: jdbc
@@ -86,9 +95,9 @@ management:
       enabled: true
     prometheus:
       enabled: true
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 logging:

@@ -13,8 +13,9 @@ A comprehensive expense management application built with Spring Boot, featuring
 
 ## Technology Stack
 
-- **Backend**: Spring Boot 3.x, Java 17
+- **Backend**: Spring Boot 4.x, Java 25
 - **Database**: PostgreSQL 15
+- **Database Migrations**: Flyway (run automatically on startup)
 - **Cache**: Redis 7
 - **Scheduler**: Quartz (for recurring transactions)
 - **Security**: Spring Security with JWT
@@ -24,7 +25,7 @@ A comprehensive expense management application built with Spring Boot, featuring
 
 ### Prerequisites
 
-- Java 17+
+- Java 25+
 - Docker & Docker Compose
 - Maven (or use Maven wrapper)
 
@@ -81,23 +82,38 @@ A comprehensive expense management application built with Spring Boot, featuring
 - `GET /api/budgets/{id}/status` - Get budget status
 
 ### Analytics
-- `GET /api/analytics/dashboard` - Dashboard summary
-- `GET /api/analytics/trends` - Spending trends
-- `GET /api/analytics/categories` - Category breakdown
+- `GET /api/analytics` - Dashboard summary (optional `startDate`, `endDate`; defaults to the last 6 months)
+- `GET /api/analytics/spending-by-category` - Category breakdown (optional `startDate`, `endDate`)
+- `GET /api/analytics/current-month` - Current month summary
+- `GET /api/analytics/year-to-date` - Year-to-date summary
 
 ### Alerts
 - `GET /api/alerts` - List user alerts
 
 ## Database Schema
 
-The application uses the following main tables:
+The schema is owned and versioned by **Flyway**; migrations run automatically on
+application startup (`spring.flyway.enabled=true`, `spring.jpa.hibernate.ddl-auto=none`).
+
+| Location | Applied when | Contents |
+|----------|--------------|----------|
+| `src/main/resources/db/migration/` | every environment | `V1__initial_schema.sql` — tables, indexes and grants |
+
+No seed/demo data is shipped — the migrations create the schema only.
+
+Main tables:
 - `users` - User accounts
-- `categories` - Transaction categories
+- `categories` - User-specific transaction categories
+- `accounts` - Bank / financial accounts
 - `transactions` - Individual transactions
 - `recurring_transactions` - Recurring transaction templates
 - `budgets` - Budget definitions
 - `budget_categories` - Budget-category relationships
 - `alerts` - System alerts and notifications
+
+To change the schema, add a new `V<n>__<description>.sql` file under `db/migration`
+(never edit an already-applied migration). Existing databases created before Flyway
+was introduced are adopted automatically via `spring.flyway.baseline-on-migrate`.
 
 ## Development
 

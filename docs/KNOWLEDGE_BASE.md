@@ -10,18 +10,18 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Java | 17 | Programming Language |
-| Spring Boot | 3.2.0 | Application Framework |
-| Spring Security | 3.2.0 | Security Framework |
-| Spring Data JPA | 3.2.0 | ORM/Data Access |
+| Java | 25 | Programming Language |
+| Spring Boot | 4.1.2 | Application Framework |
+| Spring Security | 7.1 | Security Framework |
+| Spring Data JPA | 4.x | ORM/Data Access |
 | PostgreSQL | 15 | Primary Database |
 | Redis | 7 | Caching Layer |
 | Quartz | 2.3.2 | Job Scheduling |
-| MapStruct | 1.5.5 | DTO Mapping |
-| OpenAPI/Swagger | 2.3.0 | API Documentation |
+| MapStruct | 1.6.3 | DTO Mapping |
+| OpenAPI/Swagger | 3.2.0 | API Documentation |
 | JWT (Nimbus JOSE) | — | Token Authentication |
 | Lombok | — | Code Generation |
-| Flyway | — | Database Migrations |
+| Flyway | 12.4.0 | Database Migrations (auto-run on startup) |
 | Apache POI | — | Excel Export |
 | Mockito | — | Unit Testing |
 | Testcontainers | — | Integration Testing |
@@ -113,14 +113,7 @@ expense-backend/
 │   │       ├── application-dev.yaml       # Dev profile
 │   │       ├── application-prod.yaml      # Production profile
 │   │       └── db/migration/
-│   │           ├── V1__init.sql
-│   │           ├── V2__add_updated_at_to_alerts.sql
-│   │           ├── V3__flush_and_seed_dummy_data.sql
-│   │           ├── V4__seed_dummy_data_for_sandy_user.sql
-│   │           ├── V5__add_accounts_table.sql
-│   │           ├── V6__add_account_columns_to_recurring_transactions.sql
-│   │           ├── V7__add_user_id_to_categories.sql
-│   │           └── V8__add_money_transfer_category.sql
+│   │           └── V1__initial_schema.sql         # Tables + indexes + grants
 │   └── test/
 │       ├── java/com/expenseapp/           # Mirror of main structure
 │       │   ├── account/
@@ -274,16 +267,15 @@ module/
 
 ## Flyway Migrations
 
-| Migration | Description |
-|-----------|-------------|
-| V1__init.sql | Initial schema (users, categories, transactions, recurring_transactions, budgets, budget_categories, alerts) |
-| V2__add_updated_at_to_alerts.sql | Add updated_at column to alerts table |
-| V3__flush_and_seed_dummy_data.sql | Flush existing data and seed with 2 users, 14 categories, 10 transactions, 6 recurring, 5 budgets, 5 budget_categories, 6 alerts |
-| V4__seed_dummy_data_for_sandy_user.sql | Seed additional dummy data for a specific user |
-| V5__add_accounts_table.sql | Add accounts table |
-| V6__add_account_columns_to_recurring_transactions.sql | Add account-related columns |
-| V7__add_user_id_to_categories.sql | Add user_id FK to categories |
-| V8__add_money_transfer_category.sql | Add money transfer category |
+| Migration | Location | Description |
+|-----------|----------|-------------|
+| V1__initial_schema.sql | db/migration | Initial schema: users, categories, accounts, transactions, recurring_transactions, budgets, budget_categories, alerts + all indexes + grants |
+
+Flyway runs automatically on application startup:
+- all environments: `classpath:db/migration`
+- pre-existing databases are adopted with `spring.flyway.baseline-on-migrate: true` (baseline version 0)
+- Hibernate `ddl-auto` is `none` - Flyway is the single owner of the schema
+- no seed/demo data is shipped; the migrations create the schema only
 
 ---
 
@@ -373,7 +365,7 @@ Authentication → JWT Token Filter → Request Authorization → Controller
 | GET | `/api/analytics/spending-by-category` | Yes |
 | GET | `/api/analytics/current-month` | Yes |
 | GET | `/api/analytics/year-to-date` | Yes |
-| GET | `/api/analytics/export/{yearMonth}` | Yes |
+| GET | `/api/export/comprehensive/report/excel` | Yes |
 
 ### Search
 | Method | Endpoint | Auth Required |
@@ -500,11 +492,11 @@ docker-compose up -d postgres redis
 
 ### Docker
 ```dockerfile
-FROM maven:3.8-openjdk-17 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 COPY . .
 RUN mvn clean package -DskipTests
 
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:25-jre
 COPY --from=build target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/app.jar"]

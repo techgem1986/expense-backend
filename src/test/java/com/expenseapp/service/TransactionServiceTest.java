@@ -3,6 +3,7 @@ package com.expenseapp.service;
 import com.expenseapp.account.domain.Account;
 import com.expenseapp.account.repository.AccountRepository;
 import com.expenseapp.category.domain.Category;
+import com.expenseapp.shared.config.MonitoringMetricsService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.transaction.domain.Transaction;
@@ -36,6 +37,9 @@ class TransactionServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private MonitoringMetricsService metricsService;
 
     @InjectMocks
     private TransactionService transactionService;
@@ -71,12 +75,30 @@ class TransactionServiceTest {
 
     @Test
     void shouldCreateTransaction() {
+        testTransaction.setFromAccount(testAccount);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+        when(accountRepository.saveAndFlush(any(Account.class))).thenReturn(testAccount);
 
         Transaction created = transactionService.createTransaction(testTransaction);
 
         assertNotNull(created);
         verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    void shouldRejectExpenseWhenAccountBalanceIsInsufficient() {
+        testTransaction.setType(Transaction.TransactionType.EXPENSE);
+        testTransaction.setAmount(new BigDecimal("6000.00"));
+        testTransaction.setFromAccount(testAccount);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> transactionService.createTransaction(testTransaction));
+
+        assertTrue(exception.getMessage().contains("Insufficient balance"));
+        verify(accountRepository, never()).saveAndFlush(any(Account.class));
     }
 
     @Test

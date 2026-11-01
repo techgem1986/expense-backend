@@ -14,6 +14,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 /**
@@ -56,7 +57,7 @@ public interface BudgetMapper {
         BigDecimal limitAmount = budget.getLimitAmount();
         response.setCurrentSpent(currentSpent);
         response.setRemainingAmount(limitAmount.subtract(currentSpent));
-        response.setSpentPercentage(currentSpent.divide(limitAmount, 4, BigDecimal.ROUND_HALF_UP).doubleValue());
+        response.setSpentPercentage(currentSpent.divide(limitAmount, 4, RoundingMode.HALF_UP).doubleValue());
         response.setIsOverBudget(currentSpent.compareTo(limitAmount) > 0);
 
         return response;

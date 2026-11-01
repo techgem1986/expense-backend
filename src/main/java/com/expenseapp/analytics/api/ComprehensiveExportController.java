@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -175,7 +176,7 @@ public class ComprehensiveExportController {
                       formatCurrency(analytics.getTotalIncome().subtract(analytics.getTotalExpenses())), 
                       new BaseColor(0, 112, 192)); // Blue
         addSummaryCard(summaryTable, "Save Rate", 
-                      calculateSaveRate(analytics).setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%", 
+                      calculateSaveRate(analytics).setScale(2, RoundingMode.HALF_UP).toString() + "%", 
                       new BaseColor(255, 192, 203)); // Pink
 
         PdfPCell summaryCell = new PdfPCell(summaryTable);
@@ -1605,7 +1606,7 @@ public class ComprehensiveExportController {
             return BigDecimal.ZERO;
         }
         BigDecimal saveRate = analytics.getTotalIncome().subtract(analytics.getTotalExpenses())
-            .divide(analytics.getTotalIncome(), 4, BigDecimal.ROUND_HALF_UP)
+            .divide(analytics.getTotalIncome(), 4, RoundingMode.HALF_UP)
             .multiply(BigDecimal.valueOf(100));
         return saveRate;
     }

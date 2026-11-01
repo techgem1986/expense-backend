@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -308,7 +309,7 @@ public class BudgetService {
 
         double spentPercentage = 0.0;
         if (limitAmount != null && limitAmount.compareTo(BigDecimal.ZERO) > 0) {
-            spentPercentage = currentSpent.divide(limitAmount, 4, BigDecimal.ROUND_HALF_UP).doubleValue();
+            spentPercentage = currentSpent.divide(limitAmount, 4, RoundingMode.HALF_UP).doubleValue();
         }
 
         boolean isOverBudget = limitAmount != null && limitAmount.compareTo(BigDecimal.ZERO) > 0 && currentSpent.compareTo(limitAmount) > 0;

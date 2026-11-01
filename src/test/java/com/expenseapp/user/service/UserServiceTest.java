@@ -1,5 +1,6 @@
 package com.expenseapp.user.service;
 
+import com.expenseapp.shared.config.MonitoringMetricsService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.shared.security.JwtService;
@@ -40,6 +41,9 @@ class UserServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private MonitoringMetricsService metricsService;
 
     @InjectMocks
     private UserService userService;

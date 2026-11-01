@@ -5,12 +5,12 @@ import com.expenseapp.account.dto.AccountResponse;
 import com.expenseapp.account.service.AccountService;
 import com.expenseapp.account.domain.AccountType;
 import com.expenseapp.shared.dto.ApiResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -33,9 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(value = AccountController.class,
         excludeAutoConfiguration = {
-                org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+                org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration.class,
+                org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration.class,
+                org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration.class
         })
 class AccountControllerTest {
 
@@ -45,10 +45,10 @@ class AccountControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private AccountService accountService;
 
-    @MockBean
+    @MockitoBean
     private JwtDecoder jwtDecoder;
 
     private AccountRequest testAccountRequest;

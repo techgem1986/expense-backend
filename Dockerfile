@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM eclipse-temurin:17-jdk-jammy AS builder
+FROM eclipse-temurin:25-jdk-jammy AS builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 WORKDIR /app
 

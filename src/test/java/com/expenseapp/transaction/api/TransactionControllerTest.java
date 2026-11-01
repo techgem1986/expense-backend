@@ -11,12 +11,12 @@ import com.expenseapp.category.domain.Category;
 import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.account.service.AccountService;
 import com.expenseapp.shared.dto.ApiResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -36,9 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(value = TransactionController.class,
         excludeAutoConfiguration = {
-                org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+                org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration.class,
+                org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration.class,
+                org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration.class
         },
         properties = "app.jpa.auditing=false")
 class TransactionControllerTest {
@@ -49,19 +49,19 @@ class TransactionControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private TransactionService transactionService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private CategoryService categoryService;
 
-    @MockBean
+    @MockitoBean
     private TransactionMapper transactionMapper;
 
-    @MockBean
+    @MockitoBean
     private AccountService accountService;
 
     private User testUser;

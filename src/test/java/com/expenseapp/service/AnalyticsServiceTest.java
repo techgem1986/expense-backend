@@ -10,6 +10,7 @@ import com.expenseapp.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +23,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -101,6 +104,28 @@ class AnalyticsServiceTest {
         assertNotNull(spending);
         assertEquals(1, spending.size());
         assertEquals(0.0, spending.get(0).getPercentage());
+    }
+
+    @Test
+    void shouldDefaultDateRangeWhenDatesAreNull() {
+        Category foodCategory = new Category("Food", "Food expenses", Category.CategoryType.EXPENSE);
+        when(transactionService.calculateSpendingByCategory(testUser))
+                .thenReturn(List.<Object[]>of(new Object[]{foodCategory, new BigDecimal("500.00")}));
+        when(transactionService.calculateTotalExpensesByDateRange(any(), any(), any()))
+                .thenReturn(new BigDecimal("1000.00"));
+        when(transactionService.calculateMonthlyIncomeAndExpenses(any(), any(), any()))
+                .thenReturn(List.of());
+
+        assertDoesNotThrow(() -> analyticsService.getSpendingByCategory(testUser, null, null));
+        assertDoesNotThrow(() -> analyticsService.getMonthlySpending(testUser, null, null));
+
+        ArgumentCaptor<LocalDate> startDate = ArgumentCaptor.forClass(LocalDate.class);
+        ArgumentCaptor<LocalDate> endDate = ArgumentCaptor.forClass(LocalDate.class);
+        verify(transactionService).calculateTotalExpensesByDateRange(eq(testUser), startDate.capture(), endDate.capture());
+
+        assertNotNull(startDate.getValue(), "start date should default when not supplied");
+        assertNotNull(endDate.getValue(), "end date should default when not supplied");
+        assertTrue(startDate.getValue().isBefore(endDate.getValue()));
     }
 
     @Test

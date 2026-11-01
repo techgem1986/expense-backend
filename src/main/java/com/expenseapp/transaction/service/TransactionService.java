@@ -359,31 +359,56 @@ public class TransactionService {
         if (fromAccount != null && toAccount != null) {
             // Transfer between accounts
             if (isAdd) {
-                fromAccount.setCurrentBalance(fromAccount.getCurrentBalance().subtract(amount));
-                toAccount.setCurrentBalance(toAccount.getCurrentBalance().add(amount));
+                debitAccount(fromAccount, amount);
+                creditAccount(toAccount, amount);
             } else {
-                fromAccount.setCurrentBalance(fromAccount.getCurrentBalance().add(amount));
-                toAccount.setCurrentBalance(toAccount.getCurrentBalance().subtract(amount));
+                creditAccount(fromAccount, amount);
+                debitAccount(toAccount, amount);
             }
             accountRepository.saveAndFlush(fromAccount);
             accountRepository.saveAndFlush(toAccount);
         } else if (fromAccount != null) {
             // Expense (money going out)
             if (isAdd) {
-                fromAccount.setCurrentBalance(fromAccount.getCurrentBalance().subtract(amount));
+                debitAccount(fromAccount, amount);
             } else {
-                fromAccount.setCurrentBalance(fromAccount.getCurrentBalance().add(amount));
+                creditAccount(fromAccount, amount);
             }
             accountRepository.saveAndFlush(fromAccount);
         } else if (toAccount != null) {
             // Income (money coming in)
             if (isAdd) {
-                toAccount.setCurrentBalance(toAccount.getCurrentBalance().add(amount));
+                creditAccount(toAccount, amount);
             } else {
-                toAccount.setCurrentBalance(toAccount.getCurrentBalance().subtract(amount));
+                debitAccount(toAccount, amount);
             }
             accountRepository.saveAndFlush(toAccount);
         }
+    }
+
+    /**
+     * Credit an account, increasing its current balance.
+     */
+    private void creditAccount(Account account, BigDecimal amount) {
+        BigDecimal current = account.getCurrentBalance() != null ? account.getCurrentBalance() : BigDecimal.ZERO;
+        account.setCurrentBalance(current.add(amount));
+    }
+
+    /**
+     * Debit an account, decreasing its current balance.
+     * <p>
+     * The database enforces a non-negative balance ({@code accounts_current_balance_check}),
+     * so an overdraw is rejected up-front with a clear validation error instead of
+     * surfacing as a {@code DataIntegrityViolationException} (HTTP 500).
+     */
+    private void debitAccount(Account account, BigDecimal amount) {
+        BigDecimal available = account.getCurrentBalance() != null ? account.getCurrentBalance() : BigDecimal.ZERO;
+        if (available.compareTo(amount) < 0) {
+            throw new ValidationException(String.format(
+                    "Insufficient balance in account '%s': available %s, required %s",
+                    account.getName(), available.toPlainString(), amount.toPlainString()));
+        }
+        account.setCurrentBalance(available.subtract(amount));
     }
 
     /**

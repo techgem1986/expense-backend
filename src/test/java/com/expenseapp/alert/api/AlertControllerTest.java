@@ -5,12 +5,12 @@ import com.expenseapp.alert.service.AlertService;
 import com.expenseapp.shared.dto.ApiResponse;
 import com.expenseapp.user.domain.User;
 import com.expenseapp.user.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(value = AlertController.class,
         excludeAutoConfiguration = {
-                org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+                org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration.class,
+                org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration.class,
+                org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration.class
         })
 class AlertControllerTest {
 
@@ -40,10 +40,10 @@ class AlertControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private AlertService alertService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     private User testUser;

@@ -7,6 +7,7 @@ import com.expenseapp.category.repository.CategoryRepository;
 import com.expenseapp.category.service.CategoryService;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
+import com.expenseapp.transaction.repository.TransactionRepository;
 import com.expenseapp.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private TransactionRepository transactionRepository;
 
     @InjectMocks
     private CategoryService categoryService;

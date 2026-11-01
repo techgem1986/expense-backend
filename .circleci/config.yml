@@ -6,7 +6,7 @@ orbs:
 executors:
   java-executor:
     docker:
-      - image: cimg/openjdk:17.0.0
+      - image: cimg/openjdk:25.0
     environment:
       JVM_OPTS: -Xmx3200m
       TERM: dumb

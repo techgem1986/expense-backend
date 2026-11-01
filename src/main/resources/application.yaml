@@ -5,8 +5,18 @@ server:
 spring:
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
+
+  # Flyway owns the database schema. Migrations under classpath:db/migration are
+  # applied automatically on application startup.
+  # baseline-on-migrate lets Flyway adopt a pre-existing database (created by the
+  # old docker-entrypoint-initdb.d / Hibernate ddl-auto setup) without failing.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
 
 management:
   endpoints:

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -24,10 +25,24 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class AnalyticsService {
 
+    /**
+     * Default look-back window (in months) used when the caller does not supply a
+     * start date, so every analytics endpoint works without query parameters.
+     */
+    private static final int DEFAULT_RANGE_MONTHS = 6;
+
     private final TransactionService transactionService;
 
     public AnalyticsService(TransactionService transactionService) {
         this.transactionService = transactionService;
+    }
+
+    private LocalDate resolveStartDate(LocalDate startDate) {
+        return startDate != null ? startDate : LocalDate.now().minusMonths(DEFAULT_RANGE_MONTHS);
+    }
+
+    private LocalDate resolveEndDate(LocalDate endDate) {
+        return endDate != null ? endDate : LocalDate.now();
     }
 
     /**
@@ -35,12 +50,8 @@ public class AnalyticsService {
      */
     @Cacheable(value = "analytics", key = "#user.id + '_' + #startDate + '_' + #endDate")
     public AnalyticsResponse getUserAnalytics(User user, LocalDate startDate, LocalDate endDate) {
-        if (startDate == null) {
-            startDate = LocalDate.now().minusMonths(6);
-        }
-        if (endDate == null) {
-            endDate = LocalDate.now();
-        }
+        startDate = resolveStartDate(startDate);
+        endDate = resolveEndDate(endDate);
 
         BigDecimal totalIncome = transactionService.calculateTotalIncomeByDateRange(user, startDate, endDate);
         BigDecimal totalExpenses = transactionService.calculateTotalExpensesByDateRange(user, startDate, endDate);
@@ -65,6 +76,9 @@ public class AnalyticsService {
      */
     @Cacheable(value = "spendingByCategory", key = "#user.id + '_' + #startDate + '_' + #endDate")
     public List<SpendingByCategoryResponse> getSpendingByCategory(User user, LocalDate startDate, LocalDate endDate) {
+        startDate = resolveStartDate(startDate);
+        endDate = resolveEndDate(endDate);
+
         List<Object[]> results = transactionService.calculateSpendingByCategory(user);
         
         // Calculate total expenses for percentage calculation
@@ -78,7 +92,7 @@ public class AnalyticsService {
                     // Calculate percentage
                     Double percentage = 0.0;
                     if (totalExpenses != null && totalExpenses.compareTo(BigDecimal.ZERO) > 0) {
-                        percentage = totalAmount.divide(totalExpenses, 4, BigDecimal.ROUND_HALF_UP).doubleValue() * 100.0;
+                        percentage = totalAmount.divide(totalExpenses, 4, RoundingMode.HALF_UP).doubleValue() * 100.0;
                     }
                     
                     return new SpendingByCategoryResponse(categoryName, totalAmount, percentage);
@@ -90,6 +104,9 @@ public class AnalyticsService {
      * Get monthly spending trends.
      */
     public List<MonthlySpendingResponse> getMonthlySpending(User user, LocalDate startDate, LocalDate endDate) {
+        startDate = resolveStartDate(startDate);
+        endDate = resolveEndDate(endDate);
+
         List<Object[]> results = transactionService.calculateMonthlyIncomeAndExpenses(user, startDate, endDate);
         
         return results.stream()
