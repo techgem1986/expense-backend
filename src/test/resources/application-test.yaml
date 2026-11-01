@@ -32,28 +32,6 @@ spring:
     console:
       enabled: false
 
-  data:
-    redis:
-      repositories:
-        enabled: false
-      host: localhost
-      port: 6379
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-
-  quartz:
-    enabled: false
-    job-store-type: memory
-    properties:
-      org.quartz.threadPool.threadCount: 5
-      org.quartz.threadPool.threadPriority: 5
-      org.quartz.jobStore.class: org.quartz.simpl.RAMJobStore
-      org.quartz.plugin.triggers.class: org.quartz.plugins.management.ShutdownHookPlugin
-
   security:
     oauth2:
       resourceserver:

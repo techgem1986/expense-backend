@@ -3,11 +3,6 @@ server:
   address: 0.0.0.0
 
 spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
-
   # Flyway owns the database schema. Migrations under classpath:db/migration are
   # applied automatically on application startup.
   # baseline-on-migrate lets Flyway adopt a pre-existing database (created by the

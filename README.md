@@ -16,8 +16,8 @@ A comprehensive expense management application built with Spring Boot, featuring
 - **Backend**: Spring Boot 4.x, Java 25
 - **Database**: PostgreSQL 15
 - **Database Migrations**: Flyway (run automatically on startup)
-- **Cache**: Redis 7
-- **Scheduler**: Quartz (for recurring transactions)
+- **Cache**: In-memory (`ConcurrentMapCacheManager`)
+- **Scheduler**: Spring `@Scheduled` (for recurring transactions)
 - **Security**: Spring Security with JWT
 - **Documentation**: OpenAPI/Swagger
 
@@ -36,9 +36,9 @@ A comprehensive expense management application built with Spring Boot, featuring
    cd expense-backend
    ```
 
-2. **Start infrastructure (PostgreSQL + Redis)**
+2. **Start infrastructure (PostgreSQL)**
    ```bash
-   docker-compose up -d postgres redis
+   docker-compose up -d postgres
    ```
 
 3. **Run the application**
@@ -159,10 +159,8 @@ Generate test coverage report:
 ### Production Considerations
 
 1. **Database**: Use connection pooling and proper indexing
-2. **Redis**: Configure persistence and clustering for production
-3. **Security**: Store JWT keys securely (AWS KMS, HashiCorp Vault)
-4. **Monitoring**: Enable metrics and distributed tracing
-5. **Quartz**: Consider database-backed job store for clustering
+2. **Security**: Store JWT keys securely (AWS KMS, HashiCorp Vault)
+3. **Monitoring**: Enable metrics and distributed tracing
 
 ### Environment Variables
 
@@ -172,7 +170,6 @@ For production deployment, configure:
 DATABASE_URL=jdbc:postgresql://prod-db:5432/expense_db
 DATABASE_USERNAME=prod_user
 DATABASE_PASSWORD=secure_password
-REDIS_URL=redis://prod-redis:6379
 JWT_PRIVATE_KEY_PATH=classpath:keys/prod-private.pem
 JWT_PUBLIC_KEY_PATH=classpath:keys/prod-public.pem
 ```

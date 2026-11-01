@@ -7,11 +7,6 @@ spring:
     activate:
       on-profile: prod
 
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
-
   # Production applies only the schema migrations (no demo/seed data).
   flyway:
     enabled: true
@@ -51,31 +46,6 @@ spring:
         order_updates: true
     open-in-view: false
 
-  data:
-    redis:
-      url: ${REDIS_URL}
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-
-  quartz:
-    job-store-type: jdbc
-    jdbc:
-      initialize-schema: never
-    properties:
-      org.quartz.threadPool.threadCount: 5
-      org.quartz.threadPool.threadPriority: 5
-      org.quartz.jobStore.class: org.quartz.impl.jdbcjobstore.JobStoreTX
-      org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-      org.quartz.jobStore.useProperties: false
-      org.quartz.jobStore.tablePrefix: QRTZ_
-      org.quartz.jobStore.isClustered: false
-      org.quartz.jobStore.dataSource: quartzDataSource
-      org.quartz.plugin.triggers.class: org.quartz.plugins.management.ShutdownHookPlugin
-
   security:
     oauth2:
       resourceserver:
@@ -106,7 +76,6 @@ logging:
     org.springframework: WARN
     org.springframework.security: WARN
     org.hibernate: WARN
-    org.quartz: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   file:

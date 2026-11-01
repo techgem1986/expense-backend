@@ -15,8 +15,6 @@
 | Spring Security | 7.1 | Security Framework |
 | Spring Data JPA | 4.x | ORM/Data Access |
 | PostgreSQL | 15 | Primary Database |
-| Redis | 7 | Caching Layer |
-| Quartz | 2.3.2 | Job Scheduling |
 | MapStruct | 1.6.3 | DTO Mapping |
 | OpenAPI/Swagger | 3.2.0 | API Documentation |
 | JWT (Nimbus JOSE) | — | Token Authentication |
@@ -77,7 +75,7 @@ expense-backend/
 │   │   │   │   ├── domain/             # RecurringTransaction entity
 │   │   │   │   ├── dto/                # Recurring DTOs
 │   │   │   │   ├── event/              # RecurringTransactionGeneratedEvent
-│   │   │   │   ├── job/                # RecurringTransactionJob (Quartz)
+│   │   │   │   ├── job/                # RecurringTransactionJob (@Scheduled)
 │   │   │   │   ├── mapper/             # RecurringTransactionMapper
 │   │   │   │   ├── repository/         # RecurringTransactionRepository
 │   │   │   │   └── service/            # RecurringTransactionService
@@ -95,7 +93,6 @@ expense-backend/
 │   │   │       │   ├── CachingConfiguration.java
 │   │   │       │   ├── JpaAuditingConfiguration.java
 │   │   │       │   ├── OpenApiConfiguration.java
-│   │   │       │   ├── QuartzConfiguration.java
 │   │   │       │   └── SecurityConfiguration.java
 │   │   │       ├── dto/
 │   │   │       │   └── ApiResponse.java
@@ -422,11 +419,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-  redis:
-    host: localhost
-    port: 6379
-  quartz:
-    job-store-type: memory
 
 app:
   jwt:
@@ -474,8 +466,8 @@ spring:
 ## Development Commands
 
 ```bash
-# Start infrastructure (PostgreSQL + Redis)
-docker-compose up -d postgres redis
+# Start infrastructure (PostgreSQL)
+docker-compose up -d postgres
 
 # Run application
 ./mvnw spring-boot:run
@@ -553,7 +545,6 @@ void shouldCreateUser_WhenValidRequest() {
 | `DATABASE_URL` | JDBC connection string |
 | `DATABASE_USERNAME` | DB username |
 | `DATABASE_PASSWORD` | DB password |
-| `REDIS_URL` | Redis connection string |
 | `APP_JWT_SECRET` | JWT signing secret |
 | `APP_CORS_ALLOWED_ORIGINS` | Allowed CORS origins |
 | `JAVA_OPTS` | JVM options (e.g., `-Xmx256m -Xms128m`) |

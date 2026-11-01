@@ -9,9 +9,10 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Configuration for caching in the application.
  * Uses an in-memory ConcurrentMapCacheManager as the cache store.
- * Redis integration is available when Redis dependencies and connection factory
- * are present in the classpath. To enable Redis caching, set the appropriate
- * spring.cache.type and spring.redis.* properties in the application config.
+ * No external cache service (e.g. Redis) is required; the application runs
+ * self-contained. For production multi-instance deployments, replace this bean
+ * with a distributed CacheManager (e.g. Redis) and add the corresponding
+ * dependency plus spring.cache.* / connection properties.
  */
 @Configuration
 @EnableCaching
