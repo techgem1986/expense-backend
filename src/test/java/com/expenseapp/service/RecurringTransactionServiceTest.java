@@ -3,6 +3,8 @@ package com.expenseapp.service;
 import com.expenseapp.recurring.domain.RecurringTransaction;
 import com.expenseapp.recurring.repository.RecurringTransactionRepository;
 import com.expenseapp.recurring.service.RecurringTransactionService;
+import com.expenseapp.account.domain.Account;
+import com.expenseapp.account.domain.AccountType;
 import com.expenseapp.shared.exception.ResourceNotFoundException;
 import com.expenseapp.shared.exception.ValidationException;
 import com.expenseapp.user.domain.User;
@@ -20,6 +22,7 @@ import java.util.Optional;
 
 import static com.expenseapp.recurring.domain.RecurringTransaction.Frequency.MONTHLY;
 import static com.expenseapp.recurring.domain.RecurringTransaction.TransactionType.EXPENSE;
+import static com.expenseapp.recurring.domain.RecurringTransaction.TransactionType.TRANSFER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -229,5 +232,67 @@ class RecurringTransactionServiceTest {
         recurringTransactionService.deleteRecurringTransaction(1L);
 
         verify(recurringTransactionRepository).delete(testRecurringTransaction);
+    }
+
+    @Test
+    void shouldCreateTransferRecurringTransaction() {
+        Account from = new Account(testUser, "From Account", AccountType.SAVINGS, new BigDecimal("1000.00"));
+        from.setId(1L);
+        Account to = new Account(testUser, "To Account", AccountType.CURRENT, new BigDecimal("0.00"));
+        to.setId(2L);
+
+        testRecurringTransaction.setType(TRANSFER);
+        testRecurringTransaction.setFromAccount(from);
+        testRecurringTransaction.setToAccount(to);
+
+        when(recurringTransactionRepository.save(any(RecurringTransaction.class))).thenReturn(testRecurringTransaction);
+
+        RecurringTransaction created = recurringTransactionService.createRecurringTransaction(testRecurringTransaction);
+
+        assertNotNull(created);
+        assertEquals(TRANSFER, created.getType());
+        assertEquals(from, created.getFromAccount());
+        assertEquals(to, created.getToAccount());
+        verify(recurringTransactionRepository).save(any(RecurringTransaction.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTransferFromAccountIsMissing() {
+        Account to = new Account(testUser, "To Account", AccountType.CURRENT, BigDecimal.ZERO);
+        to.setId(2L);
+
+        testRecurringTransaction.setType(TRANSFER);
+        testRecurringTransaction.setToAccount(to);
+
+        assertThrows(ValidationException.class, () -> {
+            recurringTransactionService.createRecurringTransaction(testRecurringTransaction);
+        });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTransferToAccountIsMissing() {
+        Account from = new Account(testUser, "From Account", AccountType.SAVINGS, BigDecimal.ZERO);
+        from.setId(1L);
+
+        testRecurringTransaction.setType(TRANSFER);
+        testRecurringTransaction.setFromAccount(from);
+
+        assertThrows(ValidationException.class, () -> {
+            recurringTransactionService.createRecurringTransaction(testRecurringTransaction);
+        });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTransferAccountsAreTheSame() {
+        Account account = new Account(testUser, "Same Account", AccountType.SAVINGS, BigDecimal.ZERO);
+        account.setId(1L);
+
+        testRecurringTransaction.setType(TRANSFER);
+        testRecurringTransaction.setFromAccount(account);
+        testRecurringTransaction.setToAccount(account);
+
+        assertThrows(ValidationException.class, () -> {
+            recurringTransactionService.createRecurringTransaction(testRecurringTransaction);
+        });
     }
 }

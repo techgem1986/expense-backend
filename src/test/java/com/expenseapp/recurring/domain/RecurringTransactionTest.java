@@ -112,11 +112,13 @@ class RecurringTransactionTest {
 
     @Test
     void testTransactionTypeEnum() {
-        assertEquals(2, RecurringTransaction.TransactionType.values().length);
+        assertEquals(3, RecurringTransaction.TransactionType.values().length);
         assertEquals(RecurringTransaction.TransactionType.INCOME, 
                 RecurringTransaction.TransactionType.valueOf("INCOME"));
         assertEquals(RecurringTransaction.TransactionType.EXPENSE, 
                 RecurringTransaction.TransactionType.valueOf("EXPENSE"));
+        assertEquals(RecurringTransaction.TransactionType.TRANSFER, 
+                RecurringTransaction.TransactionType.valueOf("TRANSFER"));
     }
 
     @Test

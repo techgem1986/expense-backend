@@ -27,8 +27,10 @@ public interface RecurringTransactionRepository extends JpaRepository<RecurringT
 
     /**
      * Find all recurring transactions for a specific user with category eagerly fetched.
+     * Uses LEFT JOIN so that recurring transactions without a category (e.g. transfers)
+     * are still returned.
      */
-    @Query("SELECT rt FROM RecurringTransaction rt JOIN FETCH rt.category WHERE rt.user = :user ORDER BY rt.createdAt DESC")
+    @Query("SELECT rt FROM RecurringTransaction rt LEFT JOIN FETCH rt.category WHERE rt.user = :user ORDER BY rt.createdAt DESC")
     List<RecurringTransaction> findByUserWithCategoryOrderByCreatedAtDesc(User user);
 
     /**
@@ -38,8 +40,10 @@ public interface RecurringTransactionRepository extends JpaRepository<RecurringT
 
     /**
      * Find all recurring transactions for a specific user with pagination and category eagerly fetched.
+     * Uses LEFT JOIN so that recurring transactions without a category (e.g. transfers)
+     * are still returned.
      */
-    @Query("SELECT rt FROM RecurringTransaction rt JOIN FETCH rt.category WHERE rt.user = :user ORDER BY rt.createdAt DESC")
+    @Query("SELECT rt FROM RecurringTransaction rt LEFT JOIN FETCH rt.category WHERE rt.user = :user ORDER BY rt.createdAt DESC")
     Page<RecurringTransaction> findByUserWithCategoryOrderByCreatedAtDesc(User user, Pageable pageable);
 
     /**
@@ -64,8 +68,10 @@ public interface RecurringTransactionRepository extends JpaRepository<RecurringT
 
     /**
      * Find a recurring transaction by ID with category eagerly fetched.
+     * Uses LEFT JOIN so that recurring transactions without a category (e.g. transfers)
+     * are still returned.
      */
-    @Query("SELECT rt FROM RecurringTransaction rt JOIN FETCH rt.category WHERE rt.id = :id")
+    @Query("SELECT rt FROM RecurringTransaction rt LEFT JOIN FETCH rt.category WHERE rt.id = :id")
     java.util.Optional<RecurringTransaction> findByIdWithCategory(@Param("id") Long id);
 
     /**

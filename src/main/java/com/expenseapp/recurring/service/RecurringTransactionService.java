@@ -124,7 +124,9 @@ public class RecurringTransactionService {
         recurringTransaction.setEndDate(recurringTransactionDetails.getEndDate());
         recurringTransaction.setFromAccount(recurringTransactionDetails.getFromAccount());
         recurringTransaction.setToAccount(recurringTransactionDetails.getToAccount());
-        
+
+        validateRecurringTransaction(recurringTransaction);
+
         return recurringTransactionRepository.save(recurringTransaction);
     }
 
@@ -188,6 +190,20 @@ public class RecurringTransactionService {
         
         if (recurringTransaction.getEndDate() != null && recurringTransaction.getStartDate().isAfter(recurringTransaction.getEndDate())) {
             throw new ValidationException("Start date cannot be after end date");
+        }
+
+        // Transfer-specific validation: both accounts are mandatory and must differ
+        if (recurringTransaction.getType() == TransactionType.TRANSFER) {
+            if (recurringTransaction.getFromAccount() == null) {
+                throw new ValidationException("From Account is mandatory for transfer recurring transactions");
+            }
+            if (recurringTransaction.getToAccount() == null) {
+                throw new ValidationException("To Account is mandatory for transfer recurring transactions");
+            }
+            if (recurringTransaction.getFromAccount().getId() != null
+                    && recurringTransaction.getFromAccount().getId().equals(recurringTransaction.getToAccount().getId())) {
+                throw new ValidationException("From Account and To Account cannot be the same for a transfer");
+            }
         }
     }
 }

@@ -341,7 +341,7 @@ public class RecurringTransaction extends BaseEntity {
     }
 
     public enum TransactionType {
-        INCOME, EXPENSE
+        INCOME, EXPENSE, TRANSFER
     }
 
     public enum Frequency {
